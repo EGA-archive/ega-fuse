@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>com.github.serceman</groupId>
 			<artifactId>jnr-fuse</artifactId>
-			<version>0.5.1</version>
+			<version>0.5.4</version>
 		</dependency>
 	</dependencies>
 
@@ -60,11 +60,21 @@
 	</repositories>
 
 	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<configuration>
+						<source>${maven.compiler.source}</source>
+						<target>${maven.compiler.target}</target>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.springframework.boot</groupId>
+					<artifactId>spring-boot-maven-plugin</artifactId>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>

@@ -30,47 +30,39 @@ import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionParser;
 
 @RunWith(SpringRunner.class)
 public class CommandLineOptionParserTest {
-
     private final OptionParser optionParser = CommandLineOptionParser.getOptionParser();
 
     @Test(expected = OptionException.class)
-    public void noUsername() {
-        String[] args = { "-u" };
+    public void mutuallyExclusiveNoUsernameOrCf() {
+        String[] args = {};
+        optionParser.parse(args);
+    }
+
+    @Test(expected = OptionException.class)
+    public void mutuallyExclusiveUsernameNoPassword() {
+        String[] args = { "-u", "uu" };
         optionParser.parse(args);
     }
 
     @Test
-    public void correctUsername() {
-        String[] args = { "-u", "uu" };
-        final OptionSet optionSet = optionParser.parse(args);
-        assertEquals(args[1], optionSet.valueOf("u"));
-    }
-    
-    @Test(expected = OptionException.class)
-    public void noPassword() {
-        String[] args = { "-p" };
+    public void mutuallyExclusiveUsernameWithPassword() {
+        String[] args = { "-u", "uu", "-p", "pp" };
         optionParser.parse(args);
     }
-    
+
     @Test
-    public void correctPassword() {
-        String[] args = {"-p", "pp" };
-        final OptionSet optionSet = optionParser.parse(args);
-        assertEquals(args[1], optionSet.valueOf("p"));
+    public void mutuallyExclusiveCf() {
+        String[] args = { "-cf", "/home/user/credfile.txt" };
+        optionParser.parse(args);
     }
-    
+
     @Test
     public void passAllArguments() {
-        String[] args = { "-u", "uu", "-p", "pp", "-c", "10", "-m", "/tmp/mount", "-t", "btoken", "-rt", "rtoken", "-fu", "/home/user/credfile.txt", "-ft", "/home/user/token.txt" };
+        String[] args = { "-u", "uu", "-p", "pp", "-m", "/tmp/mount", "-cf", "/home/user/credfile.txt" };
         final OptionSet optionSet = optionParser.parse(args);
         assertEquals(args[1], optionSet.valueOf("u"));
         assertEquals(args[3], optionSet.valueOf("p"));
-        assertEquals(args[5], optionSet.valueOf("c").toString());
-        assertEquals(args[7], optionSet.valueOf("m"));
-        assertEquals(args[9], optionSet.valueOf("t"));
-        assertEquals(args[11], optionSet.valueOf("rt"));
-        assertEquals(args[13], optionSet.valueOf("fu"));
-        assertEquals(args[15], optionSet.valueOf("ft"));
+        assertEquals(args[5], optionSet.valueOf("m"));
+        assertEquals(args[7], optionSet.valueOf("cf"));
     }
-
 }

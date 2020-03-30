@@ -25,7 +25,6 @@ import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
 
 @SpringBootApplication
 public class EgaFuseApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(EgaFuseApplication.class, args);
     }
@@ -34,5 +33,4 @@ public class EgaFuseApplication {
     public EgaFuseCommandLineRunner initEgaFuseCommandLineRunner() {
         return new EgaFuseCommandLineRunner();
     }
-    
 }

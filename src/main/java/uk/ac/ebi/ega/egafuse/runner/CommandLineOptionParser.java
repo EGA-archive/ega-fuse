@@ -20,21 +20,19 @@ package uk.ac.ebi.ega.egafuse.runner;
 import joptsimple.OptionParser;
 
 public class CommandLineOptionParser {
-
     public static final String OPTIONS_HELP = "h";
-
+    
     private static final OptionParser optionParser = buildParser();
 
     private static OptionParser buildParser() {
         OptionParser parser = new OptionParser();
-        parser.accepts("u", "username").withRequiredArg();
-        parser.accepts("p", "password").withRequiredArg();
-        parser.accepts("c", "parallel connections").withRequiredArg().ofType( Integer.class );
+        parser.mutuallyExclusive(parser.accepts("u"), parser.accepts("cf"));
+        parser.accepts("cf",
+                "credential file path containing username & password, e.g. \n username:user1 \n  password:pass")
+                .withRequiredArg();
+        parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
+        parser.accepts("p", "password").requiredIf("u").withRequiredArg();
         parser.accepts("m", "mount path").withRequiredArg().defaultsTo("/tmp/mnt");
-        parser.accepts("t", "bearer token").withRequiredArg();
-        parser.accepts("rt", "refresh token").withRequiredArg();
-        parser.accepts("fu", "credential file path containing username & password, e.g. \n username:user1 \n  password:pass").withRequiredArg();
-        parser.accepts("ft", "token file path containing bearer token & refresh token, e.g.\n accessToken:accToken \n refreshToken:refToken").withRequiredArg();
         parser.accepts(OPTIONS_HELP, "Use this option to get help");
         parser.allowsUnrecognizedOptions();
         return parser;

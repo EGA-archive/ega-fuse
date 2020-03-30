@@ -31,14 +31,13 @@ import uk.ac.ebi.ega.egafuse.validator.Validator;
 
 @Slf4j
 public class EgaFuseCommandLineRunner implements CommandLineRunner {
-
     @Override
     public void run(String... args) throws IOException {
         final OptionSet optionSet = parseOptions(args);
         Validator.isValid(optionSet);
     }
 
-    private OptionSet parseOptions(String... args) throws IOException  {
+    private OptionSet parseOptions(String... args) throws IOException {
         final OptionParser optionParser = CommandLineOptionParser.getOptionParser();
         try {
             final OptionSet optionSet = optionParser.parse(args);
@@ -54,7 +53,4 @@ public class EgaFuseCommandLineRunner implements CommandLineRunner {
         }
         return null;
     }
-
-   
-
 }

@@ -31,12 +31,10 @@ import org.junit.runner.RunWith;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import joptsimple.OptionParser;
-import joptsimple.OptionSet;
 import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionParser;
 
 @RunWith(SpringRunner.class)
 public class ValidatorTest {
-
     private final OptionParser optionParser = CommandLineOptionParser.getOptionParser();
 
     @Rule
@@ -48,25 +46,28 @@ public class ValidatorTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void tokenAndFtAbsent() throws IOException {
+    public void passwordAbsentInCredFile() throws IOException {
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-u", "uu", "-p", "pp", "-c", "10", "-m", mountFolder.toPath().toAbsolutePath().toString(), "-rt", "rtoken" };
-        final OptionSet optionSet = optionParser.parse(args);
-        System.out.println(optionSet.asMap());
-        Validator.isValid(optionSet);
+        final File credFolder = temporaryFolder.newFolder("home", "user");
+        final File credFile = new File(credFolder, "credfile.txt");
+        try (final FileOutputStream fileOutputStream = new FileOutputStream(credFile)) {
+            fileOutputStream.write("username:amohan".getBytes());
+            fileOutputStream.flush();
+        }
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf",
+                credFile.toPath().toAbsolutePath().toString() };
+        Validator.isValid(optionParser.parse(args));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void usernamePasswordAndFuAbsent() throws IOException {
+    @Test(expected = IOException.class)
+    public void credFileNotFound() throws IOException {
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-u", "uu", "-c", "10", "-m", mountFolder.toPath().toAbsolutePath().toString(), "-t", "btoken", "-rt", "rtoken" };
-        final OptionSet optionSet = optionParser.parse(args);
-        System.out.println(optionSet.asMap());
-        Validator.isValid(optionSet);
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", "/home/user/credfile.txt" };
+        Validator.isValid(optionParser.parse(args));
     }
 
     @Test
-    public void allPresent() throws IOException {
+    public void usernameAndPasswordBothPresent() throws IOException {
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
         final File credFolder = temporaryFolder.newFolder("home", "user");
         final File credFile = new File(credFolder, "credfile.txt");
@@ -77,16 +78,8 @@ public class ValidatorTest {
             fileOutputStream.flush();
         }
 
-        final File tokenFile = new File(credFolder, "token.txt");
-        try (final FileOutputStream fileOutputStream = new FileOutputStream(tokenFile)) {
-            fileOutputStream.write("accessToken:acctoken1234".getBytes());
-            fileOutputStream.write("\n".getBytes());
-            fileOutputStream.write("refreshToken:reftoken1234".getBytes());
-            fileOutputStream.flush();
-        }
-
-        String[] args = { "-u", "uu", "-p", "pp", "-c", "10", "-m", mountFolder.toPath().toAbsolutePath().toString(), "-t", "btoken", "-rt", "rtoken", "-fu", credFile.toPath().toAbsolutePath().toString(), "-ft",  tokenFile.toPath().toAbsolutePath().toString()};
-        final OptionSet optionSet = optionParser.parse(args);
-        assertTrue(Validator.isValid(optionSet));
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf",
+                credFile.toPath().toAbsolutePath().toString() };
+        assertTrue(Validator.isValid(optionParser.parse(args)));
     }
 }
