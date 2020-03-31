@@ -25,44 +25,47 @@ public class Input {
     private int connection;
     private Path mountPath;
     private Path credFile;
-    
-    
+
     public String getUsername() {
         return username;
     }
+
     public void setUsername(String username) {
         this.username = username;
     }
+
     public String getPassword() {
         return password;
     }
+
     public void setPassword(String password) {
         this.password = password;
     }
+
     public int getConnection() {
         return connection;
     }
-    
+
     public void setConnection(int connection) {
         this.connection = connection;
     }
-    
+
     public Path getMountPath() {
         return mountPath;
     }
-    
+
     public void setMountPath(Path mountPath) {
         this.mountPath = mountPath;
     }
-    
+
     public Path getCredFile() {
         return credFile;
     }
-    
+
     public void setCredFile(Path credFile) {
         this.credFile = credFile;
     }
-    
+
     @Override
     public String toString() {
         return "Input [username=" + username + ", password=" + password + ", connection=" + connection + ", mountPath="
