@@ -17,28 +17,91 @@
  */
 package uk.ac.ebi.ega.egafuse.runner;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+
 import joptsimple.OptionParser;
+import joptsimple.OptionSet;
+import joptsimple.internal.Strings;
+import joptsimple.util.PathConverter;
+import uk.ac.ebi.ega.egafuse.model.Input;
 
 public class CommandLineOptionParser {
-    public static final String OPTIONS_HELP = "h";
-    
-    private static final OptionParser optionParser = buildParser();
+    private static final String OPTIONS_HELP = "h";
+
+    public static Input parser(String[] args) throws IOException {
+        final OptionParser optionParser = buildParser();
+        final OptionSet optionSet = optionParser.parse(args);
+        if (optionSet.has(OPTIONS_HELP)) {
+            optionParser.printHelpOn(System.out);
+            System.exit(0);
+        }
+
+        final Input input = new Input();
+        input.setConnection(Integer.valueOf(optionSet.valueOf("c").toString()));
+
+        if (optionSet.has("cf")) {
+            Path credFilePath = (Path) optionSet.valueOf("cf");
+            Map<String, String> credentials = readAndValidateCredentialFile(credFilePath);
+            input.setUsername(credentials.get("username"));
+            input.setPassword(credentials.get("password"));
+            input.setCredFile(credFilePath);
+        } else {
+            input.setUsername(optionSet.valueOf("username").toString());
+            input.setUsername(optionSet.valueOf("password").toString());
+        }
+
+        Path mntPath = (Path) (optionSet.valueOf("m"));
+        if (!Files.exists(mntPath)) {
+            throw new IllegalArgumentException(mntPath.toString()
+                    .concat(" can't be used as mount point. Ensure that the directory path exists and is empty"));
+        }
+        input.setMountPath(mntPath);
+        return input;
+    }
 
     private static OptionParser buildParser() {
         OptionParser parser = new OptionParser();
         parser.mutuallyExclusive(parser.accepts("u"), parser.accepts("cf"));
         parser.accepts("cf",
                 "credential file path containing username & password, e.g. \n username:user1 \n  password:pass")
-                .withRequiredArg();
+                .withRequiredArg().withValuesConvertedBy(new PathConverter());
         parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
         parser.accepts("p", "password").requiredIf("u").withRequiredArg();
-        parser.accepts("m", "mount path").withRequiredArg().defaultsTo("/tmp/mnt");
+        parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(1);
+        parser.accepts("m", "mount path").withRequiredArg().withValuesConvertedBy(new PathConverter())
+                .defaultsTo(Paths.get("/tmp/mnt"));
         parser.accepts(OPTIONS_HELP, "Use this option to get help");
         parser.allowsUnrecognizedOptions();
         return parser;
     }
 
-    public static OptionParser getOptionParser() {
-        return optionParser;
+    private static Map<String, String> readAndValidateCredentialFile(Path filepath) throws IOException {
+        Map<String, String> filedata = new HashMap<>();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath.toFile())))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                StringTokenizer st = new StringTokenizer(line, ":");
+                String key = st.nextToken(":");
+                String value = st.nextToken(":");
+                filedata.put(key, value);
+            }
+
+            if (Strings.isNullOrEmpty(filedata.get("username")) || Strings.isNullOrEmpty(filedata.get("password"))) {
+                throw new IllegalArgumentException(
+                        "Username or Password not Specified in File ".concat(filepath.toString()));
+            }
+        } catch (IOException e) {
+            throw new IOException(e.getMessage(), e);
+        }
+        return filedata;
     }
 }

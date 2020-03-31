@@ -17,40 +17,15 @@
  */
 package uk.ac.ebi.ega.egafuse.runner;
 
-import static uk.ac.ebi.ega.egafuse.runner.CommandLineOptionParser.OPTIONS_HELP;
-
 import java.io.IOException;
 
 import org.springframework.boot.CommandLineRunner;
 
-import joptsimple.OptionException;
-import joptsimple.OptionParser;
-import joptsimple.OptionSet;
-import lombok.extern.slf4j.Slf4j;
-import uk.ac.ebi.ega.egafuse.validator.Validator;
+import uk.ac.ebi.ega.egafuse.model.Input;
 
-@Slf4j
-public class EgaFuseCommandLineRunner implements CommandLineRunner {
+public class EgaFuseCommandLineRunner implements CommandLineRunner {    
     @Override
     public void run(String... args) throws IOException {
-        final OptionSet optionSet = parseOptions(args);
-        Validator.isValid(optionSet);
-    }
-
-    private OptionSet parseOptions(String... args) throws IOException {
-        final OptionParser optionParser = CommandLineOptionParser.getOptionParser();
-        try {
-            final OptionSet optionSet = optionParser.parse(args);
-            if (optionSet.has(OPTIONS_HELP)) {
-                optionParser.printHelpOn(System.out);
-                System.exit(0);
-            }
-            return optionSet;
-        } catch (OptionException e) {
-            log.error("Passed invalid command line arguments");
-            optionParser.printHelpOn(System.out);
-            System.exit(1);
-        }
-        return null;
+        final Input input = CommandLineOptionParser.parser(args);
     }
 }
