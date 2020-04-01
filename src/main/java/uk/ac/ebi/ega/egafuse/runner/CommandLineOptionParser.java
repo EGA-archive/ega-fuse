@@ -55,8 +55,8 @@ public class CommandLineOptionParser {
             input.setPassword(credentials.get("password"));
             input.setCredFile(credFilePath);
         } else {
-            input.setUsername(optionSet.valueOf("username").toString());
-            input.setPassword(optionSet.valueOf("password").toString());
+            input.setUsername(optionSet.valueOf("u").toString());
+            input.setPassword(optionSet.valueOf("p").toString());
         }
 
         Path mntPath = (Path) (optionSet.valueOf("m"));
