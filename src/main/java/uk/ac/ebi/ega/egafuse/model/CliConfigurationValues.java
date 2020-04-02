@@ -19,28 +19,10 @@ package uk.ac.ebi.ega.egafuse.model;
 
 import java.nio.file.Path;
 
-public class Input {
-    private String username;
-    private String password;
+public class CliConfigurationValues {
     private int connection;
     private Path mountPath;
-    private Path credFile;
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    private Credential credential;
 
     public int getConnection() {
         return connection;
@@ -58,17 +40,17 @@ public class Input {
         this.mountPath = mountPath;
     }
 
-    public Path getCredFile() {
-        return credFile;
+    public Credential getCredential() {
+        return credential;
     }
 
-    public void setCredFile(Path credFile) {
-        this.credFile = credFile;
+    public void setCredential(Credential credential) {
+        this.credential = credential;
     }
 
     @Override
     public String toString() {
-        return "Input [username=" + username + ", password=" + password + ", connection=" + connection + ", mountPath="
-                + mountPath + ", credFile=" + credFile + "]";
+        return "CliConfigurationValues [credential=" + credential + ", connection=" + connection + ", mountPath="
+                + mountPath + "]";
     }
 }

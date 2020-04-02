@@ -15,17 +15,30 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.egafuse.runner;
+package uk.ac.ebi.ega.egafuse.model;
 
-import java.io.IOException;
+public class Credential {
+    private String username;
+    private String password;
 
-import org.springframework.boot.CommandLineRunner;
+    public String getUsername() {
+        return username;
+    }
 
-import uk.ac.ebi.ega.egafuse.model.CliConfigurationValues;
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-public class EgaFuseCommandLineRunner implements CommandLineRunner {    
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
     @Override
-    public void run(String... args) throws IOException {
-        final CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(args);
+    public String toString() {
+        return "Credential [username=" + username + ", password=" + password + "]";
     }
 }

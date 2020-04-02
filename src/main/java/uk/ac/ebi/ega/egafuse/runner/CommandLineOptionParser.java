@@ -24,20 +24,19 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.StringTokenizer;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.internal.Strings;
 import joptsimple.util.PathConverter;
-import uk.ac.ebi.ega.egafuse.model.Input;
+import uk.ac.ebi.ega.egafuse.model.CliConfigurationValues;
+import uk.ac.ebi.ega.egafuse.model.Credential;
 
 public class CommandLineOptionParser {
     private static final String OPTIONS_HELP = "h";
 
-    public static Input parser(String[] args) throws IOException {
+    public static CliConfigurationValues parser(String[] args) throws IOException {
         final OptionParser optionParser = buildParser();
         final OptionSet optionSet = optionParser.parse(args);
         if (optionSet.has(OPTIONS_HELP)) {
@@ -45,18 +44,16 @@ public class CommandLineOptionParser {
             System.exit(0);
         }
 
-        final Input input = new Input();
-        input.setConnection(Integer.valueOf(optionSet.valueOf("c").toString()));
+        final CliConfigurationValues cliConfigurationValues = new CliConfigurationValues();
+        cliConfigurationValues.setConnection(Integer.valueOf(optionSet.valueOf("c").toString()));
 
         if (optionSet.has("cf")) {
-            Path credFilePath = (Path) optionSet.valueOf("cf");
-            Map<String, String> credentials = readAndValidateCredentialFile(credFilePath);
-            input.setUsername(credentials.get("username"));
-            input.setPassword(credentials.get("password"));
-            input.setCredFile(credFilePath);
+            cliConfigurationValues.setCredential(readCredentialFile((Path) optionSet.valueOf("cf")));
         } else {
-            input.setUsername(optionSet.valueOf("u").toString());
-            input.setPassword(optionSet.valueOf("p").toString());
+            Credential credential = new Credential();
+            credential.setUsername(optionSet.valueOf("u").toString());
+            credential.setPassword(optionSet.valueOf("p").toString());
+            cliConfigurationValues.setCredential(credential);
         }
 
         Path mntPath = (Path) (optionSet.valueOf("m"));
@@ -64,8 +61,8 @@ public class CommandLineOptionParser {
             throw new IllegalArgumentException(mntPath.toString()
                     .concat(" can't be used as mount point. Ensure that the directory path exists and is empty"));
         }
-        input.setMountPath(mntPath);
-        return input;
+        cliConfigurationValues.setMountPath(mntPath);
+        return cliConfigurationValues;
     }
 
     private static OptionParser buildParser() {
@@ -84,24 +81,28 @@ public class CommandLineOptionParser {
         return parser;
     }
 
-    private static Map<String, String> readAndValidateCredentialFile(Path filepath) throws IOException {
-        Map<String, String> filedata = new HashMap<>();
+    private static Credential readCredentialFile(Path filepath) throws IOException {
+        Credential credential = new Credential();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filepath.toFile())))) {
             String line;
             while ((line = br.readLine()) != null) {
                 StringTokenizer st = new StringTokenizer(line, ":");
                 String key = st.nextToken(":");
-                String value = st.nextToken(":");
-                filedata.put(key, value);
+
+                if (key.equalsIgnoreCase("username")) {
+                    credential.setUsername(st.nextToken(":"));
+                } else if (key.equalsIgnoreCase("password")) {
+                    credential.setPassword(st.nextToken(":"));
+                }
             }
 
-            if (Strings.isNullOrEmpty(filedata.get("username")) || Strings.isNullOrEmpty(filedata.get("password"))) {
+            if (Strings.isNullOrEmpty(credential.getUsername()) || Strings.isNullOrEmpty(credential.getPassword())) {
                 throw new IllegalArgumentException(
                         "Username or Password not Specified in File ".concat(filepath.toString()));
             }
         } catch (IOException e) {
             throw new IOException(e.getMessage(), e);
         }
-        return filedata;
+        return credential;
     }
 }
