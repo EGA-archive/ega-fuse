@@ -39,6 +39,6 @@ public class Credential {
 
     @Override
     public String toString() {
-        return "Credential [username=" + username + ", password=" + password + "]";
+        return "Credential [username=" + username + ", password=*******]";
     }
 }
