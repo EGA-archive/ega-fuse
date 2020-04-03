@@ -21,9 +21,11 @@ import java.io.IOException;
 
 import org.springframework.boot.CommandLineRunner;
 
+import uk.ac.ebi.ega.egafuse.model.CliConfigurationValues;
+
 public class EgaFuseCommandLineRunner implements CommandLineRunner {    
     @Override
     public void run(String... args) throws IOException {
-
+        final CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(args);
     }
 }

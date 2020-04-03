@@ -36,8 +36,9 @@ import uk.ac.ebi.ega.egafuse.model.Credential;
 public class CommandLineOptionParser {
     private static final String OPTIONS_HELP = "h";
 
-    public static CliConfigurationValues parser(OptionSet optionSet) throws IOException {
+    public static CliConfigurationValues parser(String[] args) throws IOException {
         final OptionParser optionParser = buildParser();
+        final OptionSet optionSet = optionParser.parse(args);
         if (optionSet.has(OPTIONS_HELP)) {
             optionParser.printHelpOn(System.out);
             System.exit(0);
@@ -45,7 +46,6 @@ public class CommandLineOptionParser {
 
         final CliConfigurationValues cliConfigurationValues = new CliConfigurationValues();
         cliConfigurationValues.setConnection(Integer.valueOf(optionSet.valueOf("c").toString()));
-        cliConfigurationValues.setMaxCache(Integer.valueOf(optionSet.valueOf("cache").toString()));
 
         if (optionSet.has("cf")) {
             cliConfigurationValues.setCredential(readCredentialFile((Path) optionSet.valueOf("cf")));
@@ -65,7 +65,7 @@ public class CommandLineOptionParser {
         return cliConfigurationValues;
     }
 
-    public static OptionParser buildParser() {
+    private static OptionParser buildParser() {
         OptionParser parser = new OptionParser();
         parser.mutuallyExclusive(parser.accepts("u"), parser.accepts("cf"));
         parser.accepts("cf",
@@ -74,7 +74,6 @@ public class CommandLineOptionParser {
         parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
         parser.accepts("p", "password").requiredIf("u").withRequiredArg();
         parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(1);
-        parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
         parser.accepts("m", "mount path").withRequiredArg().withValuesConvertedBy(new PathConverter())
                 .defaultsTo(Paths.get("/tmp/mnt"));
         parser.accepts(OPTIONS_HELP, "Use this option to get help");
