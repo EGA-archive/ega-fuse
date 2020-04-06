@@ -20,7 +20,6 @@ package uk.ac.ebi.ega.egafuse.config;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -28,7 +27,6 @@ import org.springframework.cache.guava.GuavaCache;
 import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
@@ -40,14 +38,11 @@ import okhttp3.OkHttpClient;
 @Configuration
 @EnableCaching
 public class EgaFuseApplicationConfig {
-    @Autowired
-    Environment env;
-
     @Bean
-    public CacheManager cacheManager() {
+    public CacheManager cacheManager(@Value("${maxCache}") int MAX_CACHE_SIZE) {
         SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
-        GuavaCache archive = new GuavaCache("archive", CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.HOURS)
-                .maximumSize(Integer.valueOf(env.getRequiredProperty("maxCache"))).build());
+        GuavaCache archive = new GuavaCache("archive",
+                CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.HOURS).maximumSize(MAX_CACHE_SIZE).build());
         simpleCacheManager.setCaches(Arrays.asList(archive));
         return simpleCacheManager;
     }
@@ -55,10 +50,10 @@ public class EgaFuseApplicationConfig {
     @Bean
     public OkHttpClient OkHttpClientFactory(@Value("${connection.request.timeout}") int DEFAULT_REQUEST_TIMEOUT,
             @Value("${connection.timeout}") int DEFAULT_CONNECTION_TIMEOUT,
-            @Value("${connection.alive.timeout}") int DEFAULT_KEEP_ALIVE_TIMEOUT) {
+            @Value("${connection.alive.timeout}") int DEFAULT_KEEP_ALIVE_TIMEOUT,
+            @Value("${connection}") int CONNECTION) {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        ConnectionPool connectionPool = new ConnectionPool(Integer.valueOf(env.getRequiredProperty("connection")),
-                DEFAULT_KEEP_ALIVE_TIMEOUT, TimeUnit.MINUTES);
+        ConnectionPool connectionPool = new ConnectionPool(CONNECTION, DEFAULT_KEEP_ALIVE_TIMEOUT, TimeUnit.MINUTES);
         OkHttpClient okHttpClient = builder.connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MINUTES)
                 .readTimeout(DEFAULT_REQUEST_TIMEOUT, TimeUnit.MINUTES).connectionPool(connectionPool).build();
         return okHttpClient;

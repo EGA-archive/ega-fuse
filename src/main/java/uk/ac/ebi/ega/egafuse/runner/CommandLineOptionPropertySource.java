@@ -35,27 +35,19 @@ public final class CommandLineOptionPropertySource extends PropertySource<Option
 
     @Override
     public Object getProperty(String name) {
-        String value;
         switch (name) {
         case "username":
-            value = cliConfigurationValues.getCredential().getUsername();
-            break;
+            return cliConfigurationValues.getCredential().getUsername();
         case "password":
-            value = cliConfigurationValues.getCredential().getPassword();
-            break;
+            return cliConfigurationValues.getCredential().getPassword();
         case "maxCache":
-            value = String.valueOf(cliConfigurationValues.getMaxCache());
-            break;
+            return String.valueOf(cliConfigurationValues.getMaxCache());
         case "connection":
-            value = String.valueOf(cliConfigurationValues.getConnection());
-            break;
+            return String.valueOf(cliConfigurationValues.getConnection());
         case "mountPath":
-            value = cliConfigurationValues.getMountPath().toString();
-            break;
+            return cliConfigurationValues.getMountPath().toString();
         default:
-            value = null;
-            break;
+            return null;
         }
-        return value;
     }
 }
