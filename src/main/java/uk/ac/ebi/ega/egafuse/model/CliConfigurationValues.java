@@ -21,6 +21,7 @@ import java.nio.file.Path;
 
 public class CliConfigurationValues {
     private int connection;
+    private int maxCache;
     private Path mountPath;
     private Credential credential;
 
@@ -30,6 +31,14 @@ public class CliConfigurationValues {
 
     public void setConnection(int connection) {
         this.connection = connection;
+    }
+    
+    public int getMaxCache() {
+        return maxCache;
+    }
+
+    public void setMaxCache(int maxCache) {
+        this.maxCache = maxCache;
     }
 
     public Path getMountPath() {
@@ -50,7 +59,7 @@ public class CliConfigurationValues {
 
     @Override
     public String toString() {
-        return "CliConfigurationValues [credential=" + credential + ", connection=" + connection + ", mountPath="
+        return "CliConfigurationValues [credential=" + credential + ", maxCache=" + maxCache + ", connection=" + connection + ", mountPath="
                 + mountPath + "]";
     }
 }
