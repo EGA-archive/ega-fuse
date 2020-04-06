@@ -17,16 +17,26 @@
  */
 package uk.ac.ebi.ega.egafuse;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Bean;
+import java.io.IOException;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.PropertySource;
+
+import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionParser;
+import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionPropertySource;
 import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
 
 @SpringBootApplication
 public class EgaFuseApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(EgaFuseApplication.class, args);
+    public static void main(String[] args) throws IOException {
+        PropertySource<?> ps = new CommandLineOptionPropertySource("CommandLineOptionPropertySource",
+                CommandLineOptionParser.buildParser().parse(args));
+
+        new SpringApplicationBuilder(EgaFuseApplication.class).initializers((applicationContext) -> {
+            applicationContext.getEnvironment().getPropertySources().addLast(ps);
+        }).run(args); 
     }
 
     @Bean

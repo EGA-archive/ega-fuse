@@ -29,6 +29,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import joptsimple.OptionException;
+import joptsimple.OptionSet;
 import uk.ac.ebi.ega.egafuse.model.CliConfigurationValues;
 
 public class CommandLineOptionParserTest {
@@ -52,7 +53,8 @@ public class CommandLineOptionParserTest {
             fileOutputStream.flush();
         }
         String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", credFile.toPath().toAbsolutePath().toString(), "-c", "2"};
-        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(args);
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertEquals(cliConfigurationValues.getCredential().getUsername(), "amohan");
         assertEquals(cliConfigurationValues.getCredential().getPassword(), "testpass");
         assertEquals(cliConfigurationValues.getConnection(), 2);
@@ -69,21 +71,24 @@ public class CommandLineOptionParserTest {
             fileOutputStream.flush();
         }
         String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", credFile.toPath().toAbsolutePath().toString()};
-        CommandLineOptionParser.parser(args);
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CommandLineOptionParser.parser(set);
     }
     
     @Test(expected = IOException.class)
     public void CfNotPresent() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
         String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", "/randomdir/random.txt"};
-        CommandLineOptionParser.parser(args);
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CommandLineOptionParser.parser(set);
     }
     
     @Test
     public void usernameAndPasswordPresent() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");       
         String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass"};
-        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(args);
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertEquals(cliConfigurationValues.getCredential().getUsername(), "amohan");
         assertEquals(cliConfigurationValues.getCredential().getPassword(), "testpass");
     }
@@ -92,12 +97,14 @@ public class CommandLineOptionParserTest {
     public void passwordMissing() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");       
         String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan"};
-        CommandLineOptionParser.parser(args);
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CommandLineOptionParser.parser(set);
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void mountPathAbsent() throws IOException{        
         String[] args = { "-m", "/randdir", "-u", "amohan", "-p", "testpass"};
-        CommandLineOptionParser.parser(args);
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CommandLineOptionParser.parser(set);
     }
 }
