@@ -29,11 +29,12 @@ public class EgaFile extends EgaPath {
         super(name, parent);
     }
 
-    public EgaFile(String name, EgaDirectory parent, File file) {
+    public EgaFile(String name, String type, EgaDirectory parent, File file) {
         super(name, parent);
         this.file = file;
+        this.type = type;
     }
-
+    
     @Override
     public void getattr(FileStat stat) {
         stat.st_mode.set(FileStat.S_IFREG | 0444);

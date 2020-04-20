@@ -36,9 +36,9 @@ public final class CommandLineOptionPropertySource extends PropertySource<Option
     @Override
     public Object getProperty(String name) {
         switch (name) {
-        case "username":
+        case "cred.username":
             return cliConfigurationValues.getCredential().getUsername();
-        case "password":
+        case "cred.password":
             return cliConfigurationValues.getCredential().getPassword();
         case "maxCache":
             return String.valueOf(cliConfigurationValues.getMaxCache());

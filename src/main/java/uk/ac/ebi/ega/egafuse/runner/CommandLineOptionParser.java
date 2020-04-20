@@ -57,9 +57,9 @@ public class CommandLineOptionParser {
         }
 
         Path mntPath = (Path) (optionSet.valueOf("m"));
-        if (!Files.exists(mntPath)) {
+        if (Files.exists(mntPath)) {
             throw new IllegalArgumentException(mntPath.toString()
-                    .concat(" can't be used as mount point. Ensure that the directory path exists and is empty"));
+                    .concat(" can't be used as mount point. Ensure that the directory path should not exist and it will be created by fuse layer!"));
         }
         cliConfigurationValues.setMountPath(mntPath);
         return cliConfigurationValues;

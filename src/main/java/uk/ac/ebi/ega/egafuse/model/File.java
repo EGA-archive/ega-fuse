@@ -19,8 +19,12 @@ package uk.ac.ebi.ega.egafuse.model;
 
 public class File {
     private String fileId;
+    private String datasetId;
+    private String displayFileName;
     private String fileName;
     private String fileStatus;
+    private String unencryptedChecksum;
+    private String unencryptedChecksumType;
     private long fileSize;
 
     public String getFileId() {
@@ -29,6 +33,22 @@ public class File {
 
     public void setFileId(String fileId) {
         this.fileId = fileId;
+    }
+
+    public String getDatasetId() {
+        return datasetId;
+    }
+
+    public void setDatasetId(String datasetId) {
+        this.datasetId = datasetId;
+    }
+
+    public String getDisplayFileName() {
+        return displayFileName;
+    }
+
+    public void setDisplayFileName(String displayFileName) {
+        this.displayFileName = displayFileName;
     }
 
     public String getFileName() {
@@ -47,6 +67,22 @@ public class File {
         this.fileStatus = fileStatus;
     }
 
+    public String getUnencryptedChecksum() {
+        return unencryptedChecksum;
+    }
+
+    public void setUnencryptedChecksum(String unencryptedChecksum) {
+        this.unencryptedChecksum = unencryptedChecksum;
+    }
+
+    public String getUnencryptedChecksumType() {
+        return unencryptedChecksumType;
+    }
+
+    public void setUnencryptedChecksumType(String unencryptedChecksumType) {
+        this.unencryptedChecksumType = unencryptedChecksumType;
+    }
+
     public long getFileSize() {
         return fileSize;
     }
@@ -57,7 +93,9 @@ public class File {
 
     @Override
     public String toString() {
-        return "File [fileId=" + fileId + ", fileName=" + fileName + ", fileStatus=" + fileStatus + ", fileSize="
+        return "File [fileId=" + fileId + ", datasetId=" + datasetId + ", displayFileName=" + displayFileName
+                + ", fileName=" + fileName + ", fileStatus=" + fileStatus + ", unencryptedChecksum="
+                + unencryptedChecksum + ", unencryptedChecksumType=" + unencryptedChecksumType + ", fileSize="
                 + fileSize + "]";
     }
 }

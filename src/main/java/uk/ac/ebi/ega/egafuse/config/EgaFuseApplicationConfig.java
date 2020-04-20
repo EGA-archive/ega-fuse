@@ -30,10 +30,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.common.cache.CacheBuilder;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
+import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
+import uk.ac.ebi.ega.egafuse.service.Token;
 
 @Configuration
 @EnableCaching
@@ -64,5 +69,22 @@ public class EgaFuseApplicationConfig {
         RestTemplate restTemplate = new RestTemplate();
         restTemplate.setRequestFactory(new OkHttp3ClientHttpRequestFactory(httpClient));
         return restTemplate;
+    }
+
+    @Bean
+    public Token token(@Value("${cred.username}") String username, @Value("${cred.password}") String password, @Value("${ega.userId}") String egaUserId, @Value("${ega.userSecret}") String egaUserSecret, 
+            @Value("${ega.userGrant}") String egaUserGrant, @Value("${aai.server.url}") String aaiUrl) {
+        return new Token(new NetHttpTransport(), new JacksonFactory(), username, password, egaUserId, egaUserSecret, egaUserGrant, aaiUrl);
+    }
+
+    @Bean
+    public EgaDirectory egaDirectory(@Value("${app.server.url}") String apiURL, OkHttpClient okHttpClient, Token token) {
+        return new EgaDirectory("", null, okHttpClient, apiURL, token);
+    }
+
+    @Bean
+    public EgaFuseCommandLineRunner initEgaFuseCommandLineRunner(EgaDirectory egaDirectory, @Value("${mountPath}") String mountPath, @Value("${app.server.url}") String apiURL, OkHttpClient okHttpClient, Token token) {
+        egaDirectory.add(new EgaDirectory("Datasets", null, okHttpClient, apiURL, token)); 
+        return new EgaFuseCommandLineRunner(egaDirectory, mountPath);
     }
 }

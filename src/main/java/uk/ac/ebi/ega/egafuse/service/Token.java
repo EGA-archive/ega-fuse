@@ -17,36 +17,35 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import com.google.api.client.auth.oauth2.PasswordTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.BasicAuthentication;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.jackson2.JacksonFactory;
 
 public class Token {
-
-    private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
-    private static final JsonFactory JSON_FACTORY = new JacksonFactory();
-
-    @Value("${username}")
+    private HttpTransport HTTP_TRANSPORT;
+    private JsonFactory JSON_FACTORY;
     private String username;
-    @Value("${password}")
     private String password;
-
-    @Value("${ega.userId}")
     private String egaUserId;
-    @Value("${ega.userSecret}")
     private String egaUserSecret;
-    @Value("${ega.userGrant}")
     private String egaUserGrant;
-
-    @Value("${aai.server.url}")
     private String aaiUrl;
+
+    
+    public Token(HttpTransport hTTP_TRANSPORT, JsonFactory jSON_FACTORY, String username, String password,
+            String egaUserId, String egaUserSecret, String egaUserGrant, String aaiUrl) {
+        HTTP_TRANSPORT = hTTP_TRANSPORT;
+        JSON_FACTORY = jSON_FACTORY;
+        this.username = username;
+        this.password = password;
+        this.egaUserId = egaUserId;
+        this.egaUserSecret = egaUserSecret;
+        this.egaUserGrant = egaUserGrant;
+        this.aaiUrl = aaiUrl;
+    }
 
     public String getBearerToken() throws Exception {
         TokenResponse response = new PasswordTokenRequest(HTTP_TRANSPORT, JSON_FACTORY,

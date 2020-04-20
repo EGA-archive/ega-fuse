@@ -19,7 +19,6 @@ package uk.ac.ebi.ega.egafuse.runner;
 
 import java.nio.file.Paths;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 
 import jnr.ffi.Pointer;
@@ -35,24 +34,21 @@ import uk.ac.ebi.ega.egafuse.service.EgaFile;
 import uk.ac.ebi.ega.egafuse.service.EgaPath;
 
 public class EgaFuseCommandLineRunner extends FuseStubFS implements CommandLineRunner {
-
-    @Value("${mountPath}")
     private String mountPath;
+    private EgaDirectory rootDirectory;
 
-    private EgaDirectory rootDirectory = new EgaDirectory("", null);
-
-    public EgaFuseCommandLineRunner() {
-        rootDirectory.add(new EgaDirectory("Datasets", rootDirectory));
+    public EgaFuseCommandLineRunner(EgaDirectory rootDirectory, String mountPath) {
+        this.rootDirectory = rootDirectory;
+        this.mountPath = mountPath;
     }
-
+    
     @Override
     public void run(String... args) throws Exception {
-        EgaFuseCommandLineRunner the_fuse = new EgaFuseCommandLineRunner();
         try {
             String[] args_ = new String[] { "-o", "allow_other" };
-            the_fuse.mount(Paths.get(mountPath), true, true, args_);
+            this.mount(Paths.get(mountPath), true, true, args_);
         } finally {
-            the_fuse.umount();
+            this.umount();
         }
     }
 
