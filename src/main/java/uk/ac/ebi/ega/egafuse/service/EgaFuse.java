@@ -15,7 +15,7 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.egafuse.runner;
+package uk.ac.ebi.ega.egafuse.service;
 
 import java.nio.file.Paths;
 
@@ -27,9 +27,6 @@ import ru.serce.jnrfuse.FuseFillDir;
 import ru.serce.jnrfuse.FuseStubFS;
 import ru.serce.jnrfuse.struct.FileStat;
 import ru.serce.jnrfuse.struct.FuseFileInfo;
-import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
-import uk.ac.ebi.ega.egafuse.service.EgaFile;
-import uk.ac.ebi.ega.egafuse.service.EgaPath;
 
 public class EgaFuse extends FuseStubFS {
     private String mountPath;

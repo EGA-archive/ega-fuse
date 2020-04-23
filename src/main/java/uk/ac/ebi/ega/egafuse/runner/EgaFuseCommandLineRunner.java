@@ -19,6 +19,8 @@ package uk.ac.ebi.ega.egafuse.runner;
 
 import org.springframework.boot.CommandLineRunner;
 
+import uk.ac.ebi.ega.egafuse.service.EgaFuse;
+
 public class EgaFuseCommandLineRunner implements CommandLineRunner {
     private EgaFuse egaFuse;
 

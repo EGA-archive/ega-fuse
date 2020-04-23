@@ -36,11 +36,11 @@ import com.google.common.cache.CacheBuilder;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
-import uk.ac.ebi.ega.egafuse.runner.EgaFuse;
 import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
 import uk.ac.ebi.ega.egafuse.service.EgaDatasetService;
 import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
 import uk.ac.ebi.ega.egafuse.service.EgaFileService;
+import uk.ac.ebi.ega.egafuse.service.EgaFuse;
 import uk.ac.ebi.ega.egafuse.service.Token;
 
 @Configuration
