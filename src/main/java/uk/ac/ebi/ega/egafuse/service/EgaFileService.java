@@ -60,7 +60,7 @@ public class EgaFileService {
                     .addHeader("Authorization", "Bearer " + token.getBearerToken()).build();
 
             try (Response response = okHttpClient.newCall(fileRequest).execute()) {
-                return buildResponseGetFiles(response, egaDirectory);
+                return buildResponseGetFiles(response);
             } catch (IOException e) {
                 throw new IOException("Unable to execute request. Can be retried.", e);
             } catch (ClientProtocolException e) {
@@ -72,7 +72,7 @@ public class EgaFileService {
         return Collections.emptyList();
     }
 
-    private List<EgaFile> buildResponseGetFiles(final Response response, EgaDirectory egaDirectory)
+    private List<EgaFile> buildResponseGetFiles(final Response response)
             throws IOException, ClientProtocolException {
         final int status = response.code();
         switch (status) {
@@ -93,7 +93,7 @@ public class EgaFileService {
                     type = "CIP";
                 }
 
-                egaFiles.add(new EgaFile(filename.substring(0, filename.length() - 4), type, egaDirectory, file));
+                egaFiles.add(new EgaFile(filename.substring(0, filename.length() - 4), type, file));
             }
             return egaFiles;
         default:

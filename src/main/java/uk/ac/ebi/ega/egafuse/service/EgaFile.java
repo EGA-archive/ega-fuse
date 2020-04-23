@@ -29,8 +29,8 @@ public class EgaFile extends EgaPath {
         super(name, parent);
     }
 
-    public EgaFile(String name, String type, EgaDirectory parent, File file) {
-        super(name, parent);
+    public EgaFile(String name, String type, File file) {
+        super(name);
         this.file = file;
         this.type = type;
     }
