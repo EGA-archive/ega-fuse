@@ -17,41 +17,27 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import jnr.ffi.Pointer;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import ru.serce.jnrfuse.FuseFillDir;
 import ru.serce.jnrfuse.struct.FileStat;
-import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
-import uk.ac.ebi.ega.egafuse.model.File;
 
 public class EgaDirectory extends EgaPath {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(EgaDirectory.class);
-
     protected List<EgaPath> contents = new ArrayList<>();
-    private OkHttpClient okHttpClient;
-    private String apiURL;
-    private Token token;
-    private ObjectMapper mapper;
+    private EgaDatasetService egaDatasetService;
+    private EgaFileService egaFileService;
 
-    public EgaDirectory(String name, EgaDirectory parent, OkHttpClient okHttpClient, String apiURL, Token token) {
-        super(name, parent);
-        this.apiURL = apiURL;
-        this.okHttpClient = okHttpClient;
-        this.token = token;
-        this.mapper = new ObjectMapper();
+    public EgaDirectory(String name) {
+        super(name);
+    }
+    
+    public EgaDirectory(String name, EgaDatasetService egaDatasetService,
+            EgaFileService egaFileService) {
+        super(name);
+        this.egaDatasetService = egaDatasetService;
+        this.egaFileService = egaFileService;
     }
 
     public synchronized void add(EgaPath p) {
@@ -99,102 +85,16 @@ public class EgaDirectory extends EgaPath {
     }
 
     public synchronized void read(Pointer buf, FuseFillDir filler) {
-        if (contents == null || contents.size() == 0) {
+        if (contents.size() == 0) {
             if (getName().equalsIgnoreCase("datasets")) {
-                getDatasets();
+                egaDatasetService.getDatasets().forEach(egaDataset -> add(egaDataset));
             } else {
-                getFiles();
+                egaFileService.getFiles(this).forEach(egaFile -> add(egaFile));
             }
         }
 
         for (EgaPath p : contents) {
             filler.apply(buf, p.getName(), null, 0);
-        }
-    }
-
-    private void getDatasets() {
-        try {
-            Request datasetRequest = new Request.Builder().url(apiURL + "/metadata/datasets")
-                    .addHeader("Authorization", "Bearer " + token.getBearerToken()).build();
-
-            try (Response response = okHttpClient.newCall(datasetRequest).execute()) {
-                buildResponseGetDataset(response);
-            } catch (IOException e) {
-                throw new IOException("Unable to execute request. Can be retried.", e);
-            } catch (ClientProtocolException e) {
-                throw e;
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error in get dataset - {}", e.getMessage());
-        }
-    }
-
-    private void buildResponseGetDataset(final Response response) throws IOException, ClientProtocolException {
-        final int status = response.code();
-        switch (status) {
-        case 200:
-            List<String> datasets = mapper.readValue(response.body().string(), new TypeReference<List<String>>() {
-            });
-            for (String dataset : datasets) {
-                EgaDirectory egaDirectory = new EgaDirectory(dataset, this, okHttpClient, apiURL, token);
-                contents.add(egaDirectory);
-            }
-            break;
-        default:
-            LOGGER.error("status: {}", status);
-            throw new ClientProtocolException(response.body().string());
-        }
-    }
-
-    private void getFiles() {
-        String datasetId = this.getName();
-        if (datasetId.endsWith("/")) {
-            datasetId = datasetId.substring(0, datasetId.length() - 1);
-        }
-
-        try {
-            Request fileRequest = new Request.Builder()
-                    .url(apiURL.concat("/metadata/datasets/").concat(datasetId).concat("/files"))
-                    .addHeader("Authorization", "Bearer " + token.getBearerToken()).build();
-
-            try (Response response = okHttpClient.newCall(fileRequest).execute()) {
-                buildResponseGetFiles(response);
-            } catch (IOException e) {
-                throw new IOException("Unable to execute request. Can be retried.", e);
-            } catch (ClientProtocolException e) {
-                throw e;
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error in get dataset - {}", e.getMessage());
-        }
-    }
-
-    private void buildResponseGetFiles(final Response response) throws IOException, ClientProtocolException {
-        final int status = response.code();
-        switch (status) {
-        case 200:
-            List<File> files = mapper.readValue(response.body().string(), new TypeReference<List<File>>() {
-            });
-            for (File file : files) {
-                String filename = file.getDisplayFileName();
-                if (filename.contains("/")) {
-                    filename = filename.substring(filename.lastIndexOf("/") + 1);
-                }
-                
-                String type = "SOURCE";
-                if (filename.toLowerCase().endsWith(".gpg")) {
-                     type = "GPG";
-                } else if (filename.toLowerCase().endsWith(".cip")) {
-                    type = "CIP";
-                }
-                
-                EgaFile newFile = new EgaFile(filename.substring(0, filename.length() - 4), type, this, file);
-                contents.add(newFile);
-            }
-            break;
-        default:
-            LOGGER.error("status: {}", status);
-            throw new ClientProtocolException(response.body().string());
         }
     }
 }

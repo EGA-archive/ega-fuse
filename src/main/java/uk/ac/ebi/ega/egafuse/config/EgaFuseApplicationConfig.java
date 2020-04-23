@@ -36,8 +36,11 @@ import com.google.common.cache.CacheBuilder;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import uk.ac.ebi.ega.egafuse.runner.EgaFuse;
 import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
+import uk.ac.ebi.ega.egafuse.service.EgaDatasetService;
 import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
+import uk.ac.ebi.ega.egafuse.service.EgaFileService;
 import uk.ac.ebi.ega.egafuse.service.Token;
 
 @Configuration
@@ -72,19 +75,34 @@ public class EgaFuseApplicationConfig {
     }
 
     @Bean
-    public Token token(@Value("${cred.username}") String username, @Value("${cred.password}") String password, @Value("${ega.userId}") String egaUserId, @Value("${ega.userSecret}") String egaUserSecret, 
+    public Token token(@Value("${cred.username}") String username, @Value("${cred.password}") String password,
+            @Value("${ega.userId}") String egaUserId, @Value("${ega.userSecret}") String egaUserSecret,
             @Value("${ega.userGrant}") String egaUserGrant, @Value("${aai.server.url}") String aaiUrl) {
-        return new Token(new NetHttpTransport(), new JacksonFactory(), username, password, egaUserId, egaUserSecret, egaUserGrant, aaiUrl);
+        return new Token(new NetHttpTransport(), new JacksonFactory(), username, password, egaUserId, egaUserSecret,
+                egaUserGrant, aaiUrl);
     }
 
     @Bean
-    public EgaDirectory egaDirectory(@Value("${app.server.url}") String apiURL, OkHttpClient okHttpClient, Token token) {
-        return new EgaDirectory("", null, okHttpClient, apiURL, token);
+    public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
+            Token token) {
+        return new EgaFileService(okHttpClient, apiURL, token);
     }
 
     @Bean
-    public EgaFuseCommandLineRunner initEgaFuseCommandLineRunner(EgaDirectory egaDirectory, @Value("${mountPath}") String mountPath, @Value("${app.server.url}") String apiURL, OkHttpClient okHttpClient, Token token) {
-        egaDirectory.add(new EgaDirectory("Datasets", null, okHttpClient, apiURL, token)); 
-        return new EgaFuseCommandLineRunner(egaDirectory, mountPath);
+    public EgaDatasetService initEgaDatasetService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
+            Token token, EgaFileService egaFileService) {
+        return new EgaDatasetService(okHttpClient, apiURL, token, egaFileService);
+    }
+
+    @Bean
+    public EgaFuse initEgaFuse(@Value("${mountPath}") String mountPath, EgaDatasetService egaDatasetService, EgaFileService egaFileService) {
+        EgaDirectory egaDirectory = new EgaDirectory("");
+        egaDirectory.add(new EgaDirectory("Datasets", egaDatasetService, egaFileService));
+        return new EgaFuse(egaDirectory, mountPath);
+    }
+
+    @Bean
+    public EgaFuseCommandLineRunner initEgaFuseCommandLineRunner(EgaFuse egafuse) {
+        return new EgaFuseCommandLineRunner(egafuse);
     }
 }
