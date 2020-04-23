@@ -41,7 +41,7 @@ import uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig;
 @RunWith(SpringRunner.class)
 public class EgaDirectoryTest {
 
-    private EgaDirectory egadirectory;
+    private EgaDirectory egaParentdirectory;
     
     @Mock
     private EgaDatasetService egaDatasetService;
@@ -57,27 +57,27 @@ public class EgaDirectoryTest {
     
     @Before
     public void before() {
-        egadirectory = new EgaDirectory("dataset");
+        egaParentdirectory = new EgaDirectory("dataset");
     }
     
     @Test
     public void testFindPath() {
-        EgaDirectory egaDirectory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
-        egadirectory.add(egaDirectory);
-        EgaPath path = egadirectory.find(egaDirectory.getName());
-        assertEquals(path.getName(), egaDirectory.getName());
+        EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
+        egaParentdirectory.add(directory);
+        EgaPath path = egaParentdirectory.find(directory.getName());
+        assertEquals(path.getName(), directory.getName());
     }
     
     @Test
     public void testReadDatasets() {
         EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
-        egadirectory.add(directory);        
+        egaParentdirectory.add(directory);        
         List<EgaDirectory> egaDirectorys = new ArrayList<>();
         egaDirectorys.add(directory);
         Mockito.when(egaDatasetService.getDatasets()).thenReturn(egaDirectorys);
-        egadirectory.read(pointer, fuseFillDir);
+        egaParentdirectory.read(pointer, fuseFillDir);
         
-        List<EgaPath> contents  = egadirectory.contents;
+        List<EgaPath> contents  = egaParentdirectory.contents;
         assertEquals(egaDirectorys.get(0).getName(), contents.get(0).getName());
     }
     
