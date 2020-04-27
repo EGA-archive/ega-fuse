@@ -29,10 +29,6 @@ public class EgaDirectory extends EgaPath {
     private EgaDatasetService egaDatasetService;
     private EgaFileService egaFileService;
 
-    public EgaDirectory(String name) {
-        super(name);
-    }
-    
     public EgaDirectory(String name, EgaDatasetService egaDatasetService,
             EgaFileService egaFileService) {
         super(name);

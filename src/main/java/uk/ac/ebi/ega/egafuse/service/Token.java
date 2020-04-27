@@ -25,8 +25,8 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 
 public class Token {
-    private HttpTransport HTTP_TRANSPORT;
-    private JsonFactory JSON_FACTORY;
+    private HttpTransport httpTransport;
+    private JsonFactory jsonFactory;
     private String username;
     private String password;
     private String egaUserId;
@@ -35,10 +35,10 @@ public class Token {
     private String aaiUrl;
 
     
-    public Token(HttpTransport hTTP_TRANSPORT, JsonFactory jSON_FACTORY, String username, String password,
+    public Token(HttpTransport httpTransport, JsonFactory jsonFactory, String username, String password,
             String egaUserId, String egaUserSecret, String egaUserGrant, String aaiUrl) {
-        HTTP_TRANSPORT = hTTP_TRANSPORT;
-        JSON_FACTORY = jSON_FACTORY;
+        this.httpTransport = httpTransport;
+        this.jsonFactory = jsonFactory;
         this.username = username;
         this.password = password;
         this.egaUserId = egaUserId;
@@ -48,7 +48,7 @@ public class Token {
     }
 
     public String getBearerToken() throws Exception {
-        TokenResponse response = new PasswordTokenRequest(HTTP_TRANSPORT, JSON_FACTORY,
+        TokenResponse response = new PasswordTokenRequest(httpTransport, jsonFactory,
                 new GenericUrl(aaiUrl.concat("/token")), username, password).setGrantType(egaUserGrant)
                         .setClientAuthentication(new BasicAuthentication(egaUserId, egaUserSecret)).execute();
 

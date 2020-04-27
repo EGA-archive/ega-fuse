@@ -57,15 +57,13 @@ public class EgaDirectoryTest {
     
     @Before
     public void before() {
-        egaParentdirectory = new EgaDirectory("dataset");
+        egaParentdirectory = new EgaDirectory("directory", egaDatasetService, egaFileService);
     }
     
     @Test
     public void testFindPath() {
-        EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
-        egaParentdirectory.add(directory);
-        EgaPath path = egaParentdirectory.find(directory.getName());
-        assertEquals(path.getName(), directory.getName());
+        EgaPath path = egaParentdirectory.find(egaParentdirectory.getName());
+        assertEquals(path.getName(), egaParentdirectory.getName());
     }
     
     @Test
@@ -83,26 +81,24 @@ public class EgaDirectoryTest {
     
     @Test
     public void testReadFiles() {
-        EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
-        EgaFile egaFile = new EgaFile("files1", directory);
+        EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
         egaFiles.add(egaFile);        
-        Mockito.when(egaFileService.getFiles(directory)).thenReturn(egaFiles);
-        directory.read(pointer, fuseFillDir);
+        Mockito.when(egaFileService.getFiles(egaParentdirectory)).thenReturn(egaFiles);
+        egaParentdirectory.read(pointer, fuseFillDir);
 
-        List<EgaPath> contents  = directory.contents;
+        List<EgaPath> contents  = egaParentdirectory.contents;
         assertEquals(egaFile.getName(), contents.get(0).getName());
     }
     
     @Test
     public void testDeleteChild() {
-        EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
-        EgaFile egaFile = new EgaFile("files1", directory);
+        EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
         egaFiles.add(egaFile);        
 
-        directory.deleteChild(egaFile);
-        List<EgaPath> contents  = directory.contents;
+        egaParentdirectory.deleteChild(egaFile);
+        List<EgaPath> contents  = egaParentdirectory.contents;
         assertTrue(contents.isEmpty());
     }
 }

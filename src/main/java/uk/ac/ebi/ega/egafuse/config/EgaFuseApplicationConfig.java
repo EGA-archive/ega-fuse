@@ -96,8 +96,7 @@ public class EgaFuseApplicationConfig {
 
     @Bean
     public EgaFuse initEgaFuse(@Value("${mountPath}") String mountPath, EgaDatasetService egaDatasetService, EgaFileService egaFileService) {
-        EgaDirectory egaDirectory = new EgaDirectory("");
-        egaDirectory.add(new EgaDirectory("Datasets", egaDatasetService, egaFileService));
+        EgaDirectory egaDirectory = new EgaDirectory("Datasets", egaDatasetService, egaFileService);
         return new EgaFuse(egaDirectory, mountPath);
     }
 
