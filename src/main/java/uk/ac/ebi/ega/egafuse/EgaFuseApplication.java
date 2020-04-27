@@ -21,12 +21,10 @@ import java.io.IOException;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.PropertySource;
 
 import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionParser;
 import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionPropertySource;
-import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
 
 @SpringBootApplication
 public class EgaFuseApplication {
@@ -37,10 +35,5 @@ public class EgaFuseApplication {
         new SpringApplicationBuilder(EgaFuseApplication.class).initializers((applicationContext) -> {
             applicationContext.getEnvironment().getPropertySources().addLast(ps);
         }).run(args); 
-    }
-
-    @Bean
-    public EgaFuseCommandLineRunner initEgaFuseCommandLineRunner() {
-        return new EgaFuseCommandLineRunner();
     }
 }

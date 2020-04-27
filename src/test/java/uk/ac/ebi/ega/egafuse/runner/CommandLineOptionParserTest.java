@@ -43,7 +43,7 @@ public class CommandLineOptionParserTest {
     
     @Test
     public void usernameAndPasswordInCf() throws IOException{        
-        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        final File mountFolder = new File("tmp/mount");
         final File credFolder = temporaryFolder.newFolder("home", "user");
         final File credFile = new File(credFolder, "credfile.txt");
         try (final FileOutputStream fileOutputStream = new FileOutputStream(credFile)) {
@@ -58,12 +58,12 @@ public class CommandLineOptionParserTest {
         assertEquals(cliConfigurationValues.getCredential().getUsername(), "amohan");
         assertEquals(cliConfigurationValues.getCredential().getPassword(), "testpass");
         assertEquals(cliConfigurationValues.getConnection(), 2);
-        assertEquals(cliConfigurationValues.getMountPath(), mountFolder.toPath());
+        assertEquals(cliConfigurationValues.getMountPath().toString(), mountFolder.getAbsolutePath().toString());
     }
     
     @Test(expected = IllegalArgumentException.class)
     public void passwordMissingInCf() throws IOException{        
-        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        final File mountFolder = new File("tmp/mount");
         final File credFolder = temporaryFolder.newFolder("home", "user");
         final File credFile = new File(credFolder, "credfile.txt");
         try (final FileOutputStream fileOutputStream = new FileOutputStream(credFile)) {
@@ -85,7 +85,7 @@ public class CommandLineOptionParserTest {
     
     @Test
     public void usernameAndPasswordPresent() throws IOException{        
-        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");       
+        final File mountFolder = new File("tmp/mount");
         String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass"};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
@@ -102,8 +102,9 @@ public class CommandLineOptionParserTest {
     }
     
     @Test(expected = IllegalArgumentException.class)
-    public void mountPathAbsent() throws IOException{        
-        String[] args = { "-m", "/randdir", "-u", "amohan", "-p", "testpass"};
+    public void mountPathPresent() throws IOException{
+        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        String[] args = { "-m", mountFolder.getAbsolutePath(), "-u", "amohan", "-p", "testpass"};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CommandLineOptionParser.parser(set);
     }

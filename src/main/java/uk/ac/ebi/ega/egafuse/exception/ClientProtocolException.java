@@ -15,21 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.egafuse.runner;
+package uk.ac.ebi.ega.egafuse.exception;
 
-import org.springframework.boot.CommandLineRunner;
-
-import uk.ac.ebi.ega.egafuse.service.EgaFuse;
-
-public class EgaFuseCommandLineRunner implements CommandLineRunner {
-    private EgaFuse egaFuse;
-
-    public EgaFuseCommandLineRunner(EgaFuse egaFuse) {
-        this.egaFuse = egaFuse;
-    }
-    
-    @Override
-    public void run(String... args) throws Exception {
-        egaFuse.start();
+public class ClientProtocolException extends Exception {
+    public ClientProtocolException(final String message) {
+        super(message);
     }
 }
