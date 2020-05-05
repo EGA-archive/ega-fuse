@@ -57,7 +57,7 @@ public class EgaDatasetService {
             try (Response response = okHttpClient.newCall(datasetRequest).execute()) {
                 return buildResponseGetDataset(response);
             } catch (IOException e) {
-                throw new IOException("Unable to execute request. Can be retried.", e);
+                throw new IOException("Unable to execute request. Can't be retried.", e);
             } catch (ClientProtocolException e) {
                 throw e;
             }
