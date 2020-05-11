@@ -17,11 +17,18 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
-import java.io.DataInputStream;
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.NUM_PAGES;
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.PAGE_SIZE;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +36,11 @@ import org.springframework.cache.CacheManager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.io.CountingInputStream;
 
+import jnr.ffi.Pointer;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
 import uk.ac.ebi.ega.egafuse.model.File;
 
@@ -45,13 +51,19 @@ public class EgaFileService {
     private Token token;
     private ObjectMapper mapper;
     private CacheManager cachemanager;
+    private Map<String, Future<String>> keys = new HashMap<>();
+    private ExecutorService executor;
+    private EgaRetryService egaRetryService;
 
-    public EgaFileService(OkHttpClient okHttpClient, String apiURL, Token token, CacheManager cachemanager) {
+    public EgaFileService(OkHttpClient okHttpClient, String apiURL, Token token, CacheManager cachemanager,
+            ExecutorService executor, EgaRetryService egaRetryService) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
         this.token = token;
         this.mapper = new ObjectMapper();
         this.cachemanager = cachemanager;
+        this.executor = executor;
+        this.egaRetryService = egaRetryService;
     }
 
     public List<EgaFile> getFiles(EgaDirectory egaDirectory) {
@@ -105,51 +117,55 @@ public class EgaFileService {
         }
     }
 
-    public byte[] downloadFiles(String fileId, int pageNumber, long fileSize) throws IOException {
-        String key = fileId + "_" + pageNumber;
-        if (cachemanager.getCache("archive").get(key) != null) {
-            return (byte[]) cachemanager.getCache("archive").get(key).get();
-        }
+    public int fillBufferCurrentPage(Pointer buffer, String fileId, long totalFileSize, long currentPageSize,
+            long offset) {
+        int bytesToRead = (int) Math.min(totalFileSize - offset, currentPageSize);
+        int currentPage = (int) (offset / PAGE_SIZE);
 
-        long startCoordinate = pageNumber * EgaFuseApplicationConfig.PAGE_SIZE;
-        long bytesToRead = startCoordinate + EgaFuseApplicationConfig.PAGE_SIZE > fileSize
-                ? (fileSize - startCoordinate)
-                : EgaFuseApplicationConfig.PAGE_SIZE;
+        if (offset >= totalFileSize || bytesToRead <= 0)
+            return -1;
+
+        loadPage(totalFileSize, fileId, currentPage, totalFileSize);
+
+        byte[] page = null;
+        final String key = fileId + "_" + currentPage;
         try {
-            String url = apiURL + "/files/" + fileId + "?destinationFormat=plain&startCoordinate=" + startCoordinate
-                    + "&endCoordinate=" + (startCoordinate + bytesToRead);
-            LOGGER.info("page_number = " + pageNumber + ", url = " + url);
-
-            Request fileRequest = new Request.Builder().url(url)
-                    .addHeader("Authorization", "Bearer " + token.getBearerToken()).build();
-            try (Response response = okHttpClient.newCall(fileRequest).execute()) {
-                byte[] buffer = buildResponseDownloadFiles(response, bytesToRead);
-                cachemanager.getCache("archive").put(key, buffer);
-                return buffer;
-            } catch (IOException e) {
-                throw new IOException("Unable to execute request. Can be retried.", e);
+            if (keys.get(key).get() != null) {
+                page = (byte[]) cachemanager.getCache("archive").get(key).get();
             }
-        } catch (Exception e) {
-            LOGGER.error("Error in downloading file - {}", e.getMessage());
-        }
-        return null;
-    }
+        } catch (InterruptedException | ExecutionException e) {
+            LOGGER.error("Error in reading from cachemanager - {}", e.getMessage());
+        } 
 
-    private byte[] buildResponseDownloadFiles(final Response response, long bytesToRead)
-            throws IOException, ClientProtocolException {
-        final int status = response.code();
-        switch (status) {
-        case 200:
-        case 206:
-            byte[] buffer = new byte[(int) bytesToRead];
-            try (CountingInputStream cIn = new CountingInputStream(response.body().byteStream());
-                    DataInputStream dis = new DataInputStream(cIn);) {
-                dis.readFully(buffer);
-            }
-            return buffer;
-        default:
-            LOGGER.error("status: {}", status);
-            throw new ClientProtocolException(response.body().string());
+        if (page == null) {
+            LOGGER.error("Service seems to be down");
+            return -1;
+        } else {
+            int pageOffset = (int) (offset - currentPage * PAGE_SIZE);
+            LOGGER.info("totalFileSize = " + totalFileSize + " , currentPageSize = " + currentPageSize + " , offset = "
+                    + offset);
+            LOGGER.info("buffer put cachePage = " + currentPage + " , pageOffset = " + pageOffset + " , bytesToRead = "
+                    + bytesToRead);
+
+            buffer.put(0L, page, pageOffset, bytesToRead);
+            return bytesToRead;
         }
     }
+
+    private void loadPage(long fsize, String fileId, int currentPage, long fileSize) {
+        int maxPage = (int) (fsize / PAGE_SIZE);
+        int nextEndPage = currentPage + NUM_PAGES;
+        nextEndPage = nextEndPage > maxPage ? maxPage : nextEndPage;
+
+        for (; currentPage <= nextEndPage; currentPage++) {
+            final int nextPageNumber = currentPage;
+            final String key = fileId + "_" + nextPageNumber;
+            if (!keys.containsKey(key)) {
+                keys.put(key, executor.submit(() -> {
+                    return egaRetryService.downloadPage(fileId, nextPageNumber, fileSize);
+                }));
+            }
+        }
+    }
+
 }

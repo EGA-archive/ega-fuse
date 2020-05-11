@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.egafuse.config;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -39,26 +40,25 @@ import uk.ac.ebi.ega.egafuse.service.EgaDatasetService;
 import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
 import uk.ac.ebi.ega.egafuse.service.EgaFileService;
 import uk.ac.ebi.ega.egafuse.service.EgaFuse;
+import uk.ac.ebi.ega.egafuse.service.EgaRetryService;
 import uk.ac.ebi.ega.egafuse.service.Token;
 
 @Configuration
 @EnableCaching
 public class EgaFuseApplicationConfig {
-    
+
     public static final long PAGE_SIZE = 1024L * 1024L * 10L;
     public static int NUM_PAGES;
 
     @Value("${connection}")
-    public void setNameStatic(int connection){
+    public void setNameStatic(int connection) {
         NUM_PAGES = connection;
     }
-    
+
     @Bean
     public CacheManager cacheManager(@Value("${maxCache}") int MAX_CACHE_SIZE) {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager("archive");
-        cacheManager.setCaffeine(Caffeine.newBuilder()
-                .expireAfterWrite(5, TimeUnit.HOURS)
-                .maximumSize(MAX_CACHE_SIZE));
+        cacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.HOURS).maximumSize(MAX_CACHE_SIZE));
         return cacheManager;
     }
 
@@ -90,9 +90,16 @@ public class EgaFuseApplicationConfig {
     }
 
     @Bean
-    public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
+    public EgaRetryService initEgaRetryService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
             Token token, CacheManager cachemanager) {
-        return new EgaFileService(okHttpClient, apiURL, token, cachemanager);
+        return new EgaRetryService(okHttpClient, apiURL, token, cachemanager);
+    }
+
+    @Bean
+    public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
+            Token token, CacheManager cachemanager, EgaRetryService egaRetryService) {
+        return new EgaFileService(okHttpClient, apiURL, token, cachemanager, Executors.newFixedThreadPool(NUM_PAGES),
+                egaRetryService);
     }
 
     @Bean
@@ -102,7 +109,8 @@ public class EgaFuseApplicationConfig {
     }
 
     @Bean
-    public EgaFuse initEgaFuse(@Value("${mountPath}") String mountPath, EgaDatasetService egaDatasetService, EgaFileService egaFileService) {
+    public EgaFuse initEgaFuse(@Value("${mountPath}") String mountPath, EgaDatasetService egaDatasetService,
+            EgaFileService egaFileService) {
         EgaDirectory egaDirectory = new EgaDirectory("Datasets", egaDatasetService, egaFileService);
         return new EgaFuse(egaDirectory, mountPath);
     }
