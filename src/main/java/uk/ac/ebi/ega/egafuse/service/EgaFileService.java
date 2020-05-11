@@ -142,11 +142,6 @@ public class EgaFileService {
             return -1;
         } else {
             int pageOffset = (int) (offset - currentPage * PAGE_SIZE);
-            LOGGER.info("totalFileSize = " + totalFileSize + " , currentPageSize = " + currentPageSize + " , offset = "
-                    + offset);
-            LOGGER.info("buffer put cachePage = " + currentPage + " , pageOffset = " + pageOffset + " , bytesToRead = "
-                    + bytesToRead);
-
             buffer.put(0L, page, pageOffset, bytesToRead);
             return bytesToRead;
         }
