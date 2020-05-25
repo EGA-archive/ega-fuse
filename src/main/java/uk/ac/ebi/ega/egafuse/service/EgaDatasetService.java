@@ -62,7 +62,7 @@ public class EgaDatasetService {
                 throw e;
             }
         } catch (Exception e) {
-            LOGGER.error("Error in get dataset - {}", e.getMessage());
+            LOGGER.error("Error in get dataset - {}", e.getMessage(), e);
         }
         return Collections.emptyList();
     }

@@ -19,6 +19,7 @@ package uk.ac.ebi.ega.egafuse.service;
 
 import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.NUM_PAGES;
 import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.PAGE_SIZE;
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.ARCHIVE;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,7 +52,7 @@ public class EgaFileService {
     private Token token;
     private ObjectMapper mapper;
     private CacheManager cachemanager;
-    private Map<String, Future<String>> keys = new HashMap<>();
+    private Map<String, Future<Boolean>> keys = new HashMap<>();
     private ExecutorService executor;
     private EgaRetryService egaRetryService;
 
@@ -85,7 +86,7 @@ public class EgaFileService {
                 throw e;
             }
         } catch (Exception e) {
-            LOGGER.error("Error in get dataset - {}", e.getMessage());
+            LOGGER.error("Error in get dataset - {}", e.getMessage(), e);
         }
         return Collections.emptyList();
     }
@@ -130,11 +131,11 @@ public class EgaFileService {
         byte[] page = null;
         final String key = fileId + "_" + currentPage;
         try {
-            if (keys.get(key).get() != null) {
-                page = (byte[]) cachemanager.getCache("archive").get(key).get();
+            if (keys.get(key) != null && keys.get(key).get() && cachemanager.getCache(ARCHIVE).get(key) != null) {
+                page = (byte[]) cachemanager.getCache(ARCHIVE).get(key).get();
             }
         } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Error in reading from cachemanager - {}", e.getMessage());
+            LOGGER.error("Error in reading from cachemanager - {} ", e.getMessage(), e);
         } 
 
         if (page == null) {
@@ -155,11 +156,9 @@ public class EgaFileService {
         for (; currentPage <= nextEndPage; currentPage++) {
             final int nextPageNumber = currentPage;
             final String key = fileId + "_" + nextPageNumber;
-            if (!keys.containsKey(key)) {
-                keys.put(key, executor.submit(() -> {
-                    return egaRetryService.downloadPage(fileId, nextPageNumber, fileSize);
-                }));
-            }
+            keys.computeIfAbsent(key, k -> executor.submit(() -> {
+                return egaRetryService.downloadPage(fileId, nextPageNumber, fileSize);
+            }));
         }
     }
 

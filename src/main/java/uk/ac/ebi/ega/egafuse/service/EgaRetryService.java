@@ -18,6 +18,7 @@
 package uk.ac.ebi.ega.egafuse.service;
 
 import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.PAGE_SIZE;
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.ARCHIVE;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.io.CountingInputStream;
 
@@ -49,33 +51,35 @@ public class EgaRetryService {
         this.cachemanager = cachemanager;
     }
 
-    @Retryable(value = { IOException.class, ClientProtocolException.class }, maxAttempts = 6, backoff = @Backoff(10000))
-    public String downloadPage(String fileId, int pageNumber, long fileSize)
+    @Retryable(value = { IOException.class, ClientProtocolException.class }, maxAttemptsExpression  = "${connection.maxAttempts}", backoff = @Backoff(delayExpression = "${connection.backoff}"))
+    public Boolean downloadPage(String fileId, int pageNumber, long fileSize)
             throws IOException, ClientProtocolException {
         String key = fileId + "_" + pageNumber;
 
         long startCoordinate = pageNumber * PAGE_SIZE;
         long bytesToRead = startCoordinate + PAGE_SIZE > fileSize ? (fileSize - startCoordinate) : PAGE_SIZE;
-        String url = apiURL + "/files/" + fileId + "?destinationFormat=plain&startCoordinate=" + startCoordinate
-                + "&endCoordinate=" + (startCoordinate + bytesToRead);
-        LOGGER.info("page_number = " + pageNumber + ", url = " + url);
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(apiURL.concat("/files/")).path(fileId)
+                .queryParam("destinationFormat", "plain").queryParam("startCoordinate", startCoordinate)
+                .queryParam("endCoordinate", (startCoordinate + bytesToRead));
+
+        LOGGER.info("page_number = " + pageNumber + ", url = " + builder.toUriString());
 
         Request fileRequest;
         try {
-            fileRequest = new Request.Builder().url(url).addHeader("Authorization", "Bearer " + token.getBearerToken())
+            fileRequest = new Request.Builder().url(builder.toUriString()).addHeader("Authorization", "Bearer " + token.getBearerToken())
                     .build();
-
             try (Response response = okHttpClient.newCall(fileRequest).execute()) {
                 byte[] buffer = buildResponseDownloadFiles(response, bytesToRead);
-                cachemanager.getCache("archive").put(key, buffer);
-                return "success";
+                cachemanager.getCache(ARCHIVE).put(key, buffer);
+                return true;
             } catch (IOException e) {
                 throw new IOException("Unable to execute request. Can be retried.", e);
             } catch (ClientProtocolException e) {
                 throw new ClientProtocolException(e.toString());
             }
         } catch (IOException e) {
-            LOGGER.error("Error in downloading file - {}", e.getMessage());
+            LOGGER.error("Error in downloading file - {}", e.getMessage(), e);
             throw new IOException("Unable to execute request. Can be retried.", e);
         }
     }

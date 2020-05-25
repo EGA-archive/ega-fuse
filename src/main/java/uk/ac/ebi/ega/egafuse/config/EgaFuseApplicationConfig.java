@@ -48,16 +48,17 @@ import uk.ac.ebi.ega.egafuse.service.Token;
 public class EgaFuseApplicationConfig {
 
     public static final long PAGE_SIZE = 1024L * 1024L * 10L;
+    public static final String ARCHIVE = "archive";
     public static int NUM_PAGES;
 
     @Value("${connection}")
-    public void setNameStatic(int connection) {
+    public void setNumPages(int connection) {
         NUM_PAGES = connection;
     }
 
     @Bean
     public CacheManager cacheManager(@Value("${maxCache}") int MAX_CACHE_SIZE) {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager("archive");
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager(ARCHIVE);
         cacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.HOURS).maximumSize(MAX_CACHE_SIZE));
         return cacheManager;
     }
