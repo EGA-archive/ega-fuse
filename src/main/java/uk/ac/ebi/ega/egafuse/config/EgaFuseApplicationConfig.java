@@ -17,50 +17,34 @@
  */
 package uk.ac.ebi.ega.egafuse.config;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
+import uk.ac.ebi.ega.egafuse.model.CacheKey;
 import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
-import uk.ac.ebi.ega.egafuse.service.EgaDatasetService;
-import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
-import uk.ac.ebi.ega.egafuse.service.EgaFileService;
-import uk.ac.ebi.ega.egafuse.service.EgaFuse;
-import uk.ac.ebi.ega.egafuse.service.EgaRetryService;
-import uk.ac.ebi.ega.egafuse.service.Token;
+import uk.ac.ebi.ega.egafuse.service.*;
+
+import java.util.concurrent.TimeUnit;
 
 @Configuration
-@EnableCaching
 public class EgaFuseApplicationConfig {
-
-    public static final long PAGE_SIZE = 1024L * 1024L * 10L;
-    public static final String ARCHIVE = "archive";
-    public static int NUM_PAGES;
-
-    @Value("${connection}")
-    public void setNumPages(int connection) {
-        NUM_PAGES = connection;
-    }
+    public static final long CHUNK_SIZE = 1024L * 1024L * 10L;
 
     @Bean
-    public CacheManager cacheManager(@Value("${maxCache}") int MAX_CACHE_SIZE) {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager(ARCHIVE);
-        cacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.HOURS).maximumSize(MAX_CACHE_SIZE));
-        return cacheManager;
+    public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE,
+                                                     EgaRetryService egaRetryService) {
+        return Caffeine.newBuilder()
+                .expireAfterWrite(5, TimeUnit.HOURS)
+                .maximumSize(MAX_CACHE_SIZE)
+                .buildAsync(egaRetryService::downloadChunk);
     }
 
     @Bean
@@ -70,9 +54,8 @@ public class EgaFuseApplicationConfig {
             @Value("${connection}") int CONNECTION) {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         ConnectionPool connectionPool = new ConnectionPool(CONNECTION, DEFAULT_KEEP_ALIVE_TIMEOUT, TimeUnit.MINUTES);
-        OkHttpClient okHttpClient = builder.connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MINUTES)
+        return builder.connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MINUTES)
                 .readTimeout(DEFAULT_REQUEST_TIMEOUT, TimeUnit.MINUTES).connectionPool(connectionPool).build();
-        return okHttpClient;
     }
 
     @Bean
@@ -92,15 +75,14 @@ public class EgaFuseApplicationConfig {
 
     @Bean
     public EgaRetryService initEgaRetryService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            Token token, CacheManager cachemanager) {
-        return new EgaRetryService(okHttpClient, apiURL, token, cachemanager);
+            Token token) {
+        return new EgaRetryService(okHttpClient, apiURL, token);
     }
 
     @Bean
     public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            Token token, CacheManager cachemanager, EgaRetryService egaRetryService) {
-        return new EgaFileService(okHttpClient, apiURL, token, cachemanager, Executors.newFixedThreadPool(NUM_PAGES),
-                egaRetryService);
+            @Value("${cache.prefetch}") int cachePrefect, Token token, AsyncLoadingCache<CacheKey, byte[]> cache) {
+        return new EgaFileService(okHttpClient, apiURL, cachePrefect, token, cache);
     }
 
     @Bean

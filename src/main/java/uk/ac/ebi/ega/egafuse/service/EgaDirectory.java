@@ -74,18 +74,18 @@ public class EgaDirectory extends EgaPath {
     }
 
     @Override
-    public void getattr(FileStat stat) {
+    public void getattr(FileStat stat, long uid, long gid) {
         stat.st_mode.set(FileStat.S_IFDIR | 0777);
-        stat.st_uid.set(0);
-        stat.st_gid.set(0);
+        stat.st_uid.set(uid);
+        stat.st_gid.set(gid);
     }
 
     public synchronized void read(Pointer buf, FuseFillDir filler) {
         if (contents.size() == 0) {
             if (getName().equalsIgnoreCase("datasets")) {
-                egaDatasetService.getDatasets().forEach(egaDataset -> add(egaDataset));
+                egaDatasetService.getDatasets().forEach(this::add);
             } else {
-                egaFileService.getFiles(this).forEach(egaFile -> add(egaFile));
+                egaFileService.getFiles(this).forEach(this::add);
             }
         }
 

@@ -36,13 +36,15 @@ public class EgaFile extends EgaPath {
     }
 
     @Override
-    public void getattr(FileStat stat) {
-        stat.st_mode.set(FileStat.S_IFREG | 0444);
+    public void getattr(FileStat stat, long uid, long gid) {
+        stat.st_mode.set(FileStat.S_IFREG | 0777);
         stat.st_size.set(file.getFileSize());
+        stat.st_uid.set(uid);
+        stat.st_gid.set(gid);
     }
 
     public int read(Pointer buffer, long size, long offset) {
-        return egaFileService.fillBufferCurrentPage(buffer, file.getFileId(), file.getFileSize(), size, offset);
+        return egaFileService.fillBufferCurrentChunk(buffer, file.getFileId(), file.getFileSize(), size, offset);
     }
 
     public int open() {

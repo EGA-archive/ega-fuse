@@ -17,54 +17,46 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
-import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.NUM_PAGES;
-import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.PAGE_SIZE;
-import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.ARCHIVE;
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.CHUNK_SIZE;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.CacheManager;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 
 import jnr.ffi.Pointer;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
+import uk.ac.ebi.ega.egafuse.model.CacheKey;
 import uk.ac.ebi.ega.egafuse.model.File;
 
 public class EgaFileService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EgaFileService.class);
+    private int cachePrefect;
     private OkHttpClient okHttpClient;
     private String apiURL;
     private Token token;
     private ObjectMapper mapper;
-    private CacheManager cachemanager;
-    private Map<String, Future<Boolean>> keys = new HashMap<>();
-    private ExecutorService executor;
-    private EgaRetryService egaRetryService;
+    private AsyncLoadingCache<CacheKey, byte[]> cache;
 
-    public EgaFileService(OkHttpClient okHttpClient, String apiURL, Token token, CacheManager cachemanager,
-            ExecutorService executor, EgaRetryService egaRetryService) {
+    public EgaFileService(OkHttpClient okHttpClient, String apiURL, int cachePrefect, Token token,
+            AsyncLoadingCache<CacheKey, byte[]> cache) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
+        this.cachePrefect = cachePrefect;
         this.token = token;
         this.mapper = new ObjectMapper();
-        this.cachemanager = cachemanager;
-        this.executor = executor;
-        this.egaRetryService = egaRetryService;
+        this.cache = cache;
     }
 
     public List<EgaFile> getFiles(EgaDirectory egaDirectory) {
@@ -118,47 +110,40 @@ public class EgaFileService {
         }
     }
 
-    public int fillBufferCurrentPage(Pointer buffer, String fileId, long totalFileSize, long currentPageSize,
+    public int fillBufferCurrentChunk(Pointer buffer, String fileId, long totalFileSize, long currentChunkSize,
             long offset) {
-        int bytesToRead = (int) Math.min(totalFileSize - offset, currentPageSize);
-        int currentPage = (int) (offset / PAGE_SIZE);
+        int bytesToRead = (int) Math.min(totalFileSize - offset, currentChunkSize);
+        int currentChunk = (int) (offset / CHUNK_SIZE);
 
         if (offset >= totalFileSize || bytesToRead <= 0)
             return -1;
 
-        loadPage(totalFileSize, fileId, currentPage, totalFileSize);
+        byte[] chunk = null;
+        prefetchChunk(fileId, currentChunk, totalFileSize);
+        CacheKey cacheKey = new CacheKey(currentChunk, totalFileSize, fileId);
 
-        byte[] page = null;
-        final String key = fileId + "_" + currentPage;
         try {
-            if (keys.get(key) != null && keys.get(key).get() && cachemanager.getCache(ARCHIVE).get(key) != null) {
-                page = (byte[]) cachemanager.getCache(ARCHIVE).get(key).get();
-            }
+            chunk = cache.get(cacheKey).get();
         } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Error in reading from cachemanager - {} ", e.getMessage(), e);
-        } 
+            LOGGER.error("Error in reading from cache - {} ", e.getMessage(), e);
+        }
 
-        if (page == null) {
+        if (chunk == null) {
             LOGGER.error("Service seems to be down");
             return -1;
         } else {
-            int pageOffset = (int) (offset - currentPage * PAGE_SIZE);
-            buffer.put(0L, page, pageOffset, bytesToRead);
+            int chunkOffset = (int) (offset - currentChunk * CHUNK_SIZE);
+            buffer.put(0L, chunk, chunkOffset, bytesToRead);
             return bytesToRead;
         }
     }
 
-    private void loadPage(long fsize, String fileId, int currentPage, long fileSize) {
-        int maxPage = (int) (fsize / PAGE_SIZE);
-        int nextEndPage = currentPage + NUM_PAGES;
-        nextEndPage = nextEndPage > maxPage ? maxPage : nextEndPage;
+    private void prefetchChunk(String fileId, int chunk, long fileSize) {
+        int maxChunk = (int) (fileSize / CHUNK_SIZE);
+        int endChunk = Math.min(chunk + cachePrefect, maxChunk);
 
-        for (; currentPage <= nextEndPage; currentPage++) {
-            final int nextPageNumber = currentPage;
-            final String key = fileId + "_" + nextPageNumber;
-            keys.computeIfAbsent(key, k -> executor.submit(() -> {
-                return egaRetryService.downloadPage(fileId, nextPageNumber, fileSize);
-            }));
+        while (chunk <= endChunk) {
+            cache.get(new CacheKey(chunk++, fileSize, fileId));
         }
     }
 

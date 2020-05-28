@@ -19,15 +19,10 @@ package uk.ac.ebi.ega.egafuse.config;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.IOException;
-
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -45,20 +40,11 @@ public class EgaFuseApplicationConfigTest {
     private int DEFAULT_CONNECTION_TIMEOUT;
 
     @Autowired
-    private CacheManager cacheManager;
-
-    @Autowired
     private OkHttpClient okhttp;
 
-    @ClassRule
-    public static final EnvironmentVariables environmentVariables = new EnvironmentVariables()
-        .set("maxCache", "4")
-        .set("connection", "5");
-
     @Test
-    public void testResourceParameters() throws IOException {
+    public void testResourceParameters() {
         assertEquals(DEFAULT_REQUEST_TIMEOUT * 60000, okhttp.readTimeoutMillis());
         assertEquals(DEFAULT_CONNECTION_TIMEOUT * 60000, okhttp.connectTimeoutMillis());
-        assertEquals("archive", cacheManager.getCache("archive").getName());
     }
 }
