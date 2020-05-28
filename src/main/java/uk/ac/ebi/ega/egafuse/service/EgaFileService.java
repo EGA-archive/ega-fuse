@@ -96,8 +96,7 @@ public class EgaFileService {
                     filename = filename.substring(filename.lastIndexOf("/") + 1);
                 }
 
-                if (filename.toLowerCase().endsWith(".gpg")) {
-                } else if (filename.toLowerCase().endsWith(".cip")) {
+                if (filename.toLowerCase().endsWith(".cip")) {
                     file.setFileSize(file.getFileSize() - 16);
                 }
 
