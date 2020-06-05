@@ -17,34 +17,44 @@
  */
 package uk.ac.ebi.ega.egafuse.config;
 
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import okhttp3.ConnectionPool;
-import okhttp3.OkHttpClient;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
+
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
 import uk.ac.ebi.ega.egafuse.model.CacheKey;
 import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
-import uk.ac.ebi.ega.egafuse.service.*;
-
-import java.util.concurrent.TimeUnit;
+import uk.ac.ebi.ega.egafuse.service.EgaDatasetService;
+import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
+import uk.ac.ebi.ega.egafuse.service.EgaFileService;
+import uk.ac.ebi.ega.egafuse.service.EgaFuse;
+import uk.ac.ebi.ega.egafuse.service.FileChunkDownloadService;
+import uk.ac.ebi.ega.egafuse.service.IFileChunkDownloadService;
+import uk.ac.ebi.ega.egafuse.service.Token;
 
 @Configuration
 public class EgaFuseApplicationConfig {
-    public static final long CHUNK_SIZE = 1024L * 1024L * 10L;
+    @Value("${app.url}")
+    private String appUrl;
+
+    @Value("${api.chunksize}")
+    private long chunkSize;
 
     @Bean
     public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE,
-                                                     EgaRetryService egaRetryService) {
-        return Caffeine.newBuilder()
-                .expireAfterWrite(5, TimeUnit.HOURS)
-                .maximumSize(MAX_CACHE_SIZE)
-                .buildAsync(egaRetryService::downloadChunk);
+            IFileChunkDownloadService fileChunkDownloadService) {
+        return Caffeine.newBuilder().expireAfterWrite(5, TimeUnit.HOURS).maximumSize(MAX_CACHE_SIZE)
+                .buildAsync(fileChunkDownloadService::downloadChunk);
     }
 
     @Bean
@@ -68,27 +78,26 @@ public class EgaFuseApplicationConfig {
     @Bean
     public Token token(@Value("${cred.username}") String username, @Value("${cred.password}") String password,
             @Value("${ega.userId}") String egaUserId, @Value("${ega.userSecret}") String egaUserSecret,
-            @Value("${ega.userGrant}") String egaUserGrant, @Value("${aai.server.url}") String aaiUrl) {
+            @Value("${ega.userGrant}") String egaUserGrant, @Value("${aai.url}") String aaiUrl) {
         return new Token(new NetHttpTransport(), new JacksonFactory(), username, password, egaUserId, egaUserSecret,
                 egaUserGrant, aaiUrl);
     }
 
     @Bean
-    public EgaRetryService initEgaRetryService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            Token token) {
-        return new EgaRetryService(okHttpClient, apiURL, token);
+    public IFileChunkDownloadService initEgaRetryService(OkHttpClient okHttpClient, Token token) {
+        return new FileChunkDownloadService(okHttpClient, appUrl, token);
     }
 
     @Bean
-    public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            @Value("${cache.prefetch}") int cachePrefect, Token token, AsyncLoadingCache<CacheKey, byte[]> cache) {
-        return new EgaFileService(okHttpClient, apiURL, cachePrefect, token, cache);
+    public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${cache.prefetch}") int cachePrefetch,
+            Token token, AsyncLoadingCache<CacheKey, byte[]> cache) {
+        return new EgaFileService(okHttpClient, appUrl, chunkSize, cachePrefetch, token, cache);
     }
 
     @Bean
-    public EgaDatasetService initEgaDatasetService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            Token token, EgaFileService egaFileService) {
-        return new EgaDatasetService(okHttpClient, apiURL, token, egaFileService);
+    public EgaDatasetService initEgaDatasetService(OkHttpClient okHttpClient, Token token,
+            EgaFileService egaFileService) {
+        return new EgaDatasetService(okHttpClient, appUrl, token, egaFileService);
     }
 
     @Bean

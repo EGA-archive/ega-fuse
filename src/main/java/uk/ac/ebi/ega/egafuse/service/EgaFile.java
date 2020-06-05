@@ -37,7 +37,7 @@ public class EgaFile extends EgaPath {
 
     @Override
     public void getattr(FileStat stat, long uid, long gid) {
-        stat.st_mode.set(FileStat.S_IFREG | 0777);
+        stat.st_mode.set(FileStat.S_IFREG | 0644);
         stat.st_size.set(file.getFileSize());
         stat.st_uid.set(uid);
         stat.st_gid.set(gid);
@@ -49,5 +49,9 @@ public class EgaFile extends EgaPath {
 
     public int open() {
         return 0;
+    }
+    
+    public File getFile() {
+        return file;
     }
 }

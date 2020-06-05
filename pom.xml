@@ -86,6 +86,11 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-aspects</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.github.gmazzo</groupId>
+			<artifactId>okhttp-mock</artifactId>
+			<version>1.2.1</version>
+		</dependency>
 	</dependencies>
 	<repositories>
 		<repository>

@@ -17,8 +17,6 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
-import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.CHUNK_SIZE;
-
 import java.io.DataInputStream;
 import java.io.IOException;
 
@@ -36,13 +34,13 @@ import okhttp3.Response;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
 import uk.ac.ebi.ega.egafuse.model.CacheKey;
 
-public class EgaRetryService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EgaRetryService.class);
+public class FileChunkDownloadService implements IFileChunkDownloadService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FileChunkDownloadService.class);
     private OkHttpClient okHttpClient;
     private String apiURL;
     private Token token;
 
-    public EgaRetryService(OkHttpClient okHttpClient, String apiURL, Token token) {
+    public FileChunkDownloadService(OkHttpClient okHttpClient, String apiURL, Token token) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
         this.token = token;
@@ -51,18 +49,14 @@ public class EgaRetryService {
     @Retryable(value = {IOException.class, ClientProtocolException.class}, maxAttemptsExpression = "${connection.maxAttempts}", 
             backoff = @Backoff(delayExpression = "${connection.backoff}"))
     public byte[] downloadChunk(CacheKey cacheKey) throws IOException, ClientProtocolException {
-        String fileId = cacheKey.getFileId();
-        int chunkNumber = cacheKey.getChunkNumber();
-        long fileSize = cacheKey.getFileSize();
-
-        long startCoordinate = chunkNumber * CHUNK_SIZE;
-        long bytesToRead = startCoordinate + CHUNK_SIZE > fileSize ? (fileSize - startCoordinate) : CHUNK_SIZE;
-
-        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(apiURL.concat("/files/")).path(fileId)
+        long startCoordinate = cacheKey.getStartCoordinate();
+        long bytesToRead = cacheKey.getChunkBytesToRead();
+       
+        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(apiURL.concat("/files/")).path(cacheKey.getFileId())
                 .queryParam("destinationFormat", "plain").queryParam("startCoordinate", startCoordinate)
                 .queryParam("endCoordinate", (startCoordinate + bytesToRead));
 
-        LOGGER.info("chunkNumber = " + chunkNumber + ", url = " + builder.toUriString());
+        LOGGER.info("url = " + builder.toUriString());
 
         Request fileRequest;
         try {

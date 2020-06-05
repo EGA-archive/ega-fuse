@@ -75,7 +75,7 @@ public class EgaDirectory extends EgaPath {
 
     @Override
     public void getattr(FileStat stat, long uid, long gid) {
-        stat.st_mode.set(FileStat.S_IFDIR | 0777);
+        stat.st_mode.set(FileStat.S_IFDIR | 0644);
         stat.st_uid.set(uid);
         stat.st_gid.set(gid);
     }

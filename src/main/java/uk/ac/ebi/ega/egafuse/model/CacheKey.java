@@ -20,22 +20,22 @@ package uk.ac.ebi.ega.egafuse.model;
 import com.google.common.base.Objects;
 
 public class CacheKey {
-    private final int chunkNumber;
-    private final long fileSize;
+    private final long startCoordinate;
+    private final long chunkBytesToRead;
     private final String fileId;
 
-    public CacheKey(int chunkNumber, long fileSize, String fileId) {
-        this.chunkNumber = chunkNumber;
-        this.fileSize = fileSize;
+    public CacheKey(long startCoordinate, long chunkBytesToRead, String fileId) {
+        this.startCoordinate = startCoordinate;
+        this.chunkBytesToRead = chunkBytesToRead;
         this.fileId = fileId;
     }
 
-    public int getChunkNumber() {
-        return chunkNumber;
+    public long getStartCoordinate() {
+        return startCoordinate;
     }
 
-    public long getFileSize() {
-        return fileSize;
+    public long getChunkBytesToRead() {
+        return chunkBytesToRead;
     }
 
     public String getFileId() {
@@ -49,18 +49,18 @@ public class CacheKey {
         if (o == null || getClass() != o.getClass())
             return false;
         CacheKey cacheKey = (CacheKey) o;
-        return chunkNumber == cacheKey.chunkNumber && fileSize == cacheKey.fileSize
+        return startCoordinate == cacheKey.startCoordinate && chunkBytesToRead == cacheKey.chunkBytesToRead
                 && Objects.equal(fileId, cacheKey.fileId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(chunkNumber, fileSize, fileId);
+        return Objects.hashCode(startCoordinate, chunkBytesToRead, fileId);
     }
 
     @Override
     public String toString() {
-        return "CacheKey{" + "chunkNumber=" + chunkNumber + ", fileSize=" + fileSize + ", fileId='" + fileId + '\''
-                + '}';
+        return "CacheKey{" + "startCoordinate=" + startCoordinate + ", chunkBytesToRead=" + chunkBytesToRead
+                + ", fileId='" + fileId + '\'' + '}';
     }
 }
