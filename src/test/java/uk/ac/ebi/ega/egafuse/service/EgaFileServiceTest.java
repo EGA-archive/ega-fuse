@@ -90,7 +90,8 @@ public class EgaFileServiceTest {
         List<File> files = new ArrayList<>();
         File file = new File();
         file.setFileId("EGAF00001");
-        file.setDisplayFileName("test.cip");
+        file.setFileName("test1.cip");
+        file.setDisplayFileName("test1");
         file.setFileSize(100l);
         files.add(file);
         interceptor.addRule()
@@ -101,8 +102,7 @@ public class EgaFileServiceTest {
         File responseFile = userFile.get(0).getFile();
         assertEquals(file.getFileId(), responseFile.getFileId());
         assertEquals(file.getFileSize() - 16, responseFile.getFileSize());
-        assertEquals(file.getDisplayFileName().substring(0, file.getDisplayFileName().length() - 4),
-                userFile.get(0).getName());
+        assertEquals(file.getFileName(), responseFile.getFileName());
 
     }
 
@@ -111,9 +111,11 @@ public class EgaFileServiceTest {
         EgaDirectory userDirecory = new EgaDirectory("EGAD00001", null, null);
         List<File> files = new ArrayList<>();
         File file1 = new File();
-        file1.setDisplayFileName("/test1.cip");
+        file1.setFileName("/test1.cip");
+        file1.setDisplayFileName("test1");
         File file2 = new File();
-        file2.setDisplayFileName("/test2.gpg");
+        file2.setFileName("/test2.gpg");
+        file2.setDisplayFileName("test2");
         files.add(file1);
         files.add(file2);
 

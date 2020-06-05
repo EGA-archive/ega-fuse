@@ -91,14 +91,16 @@ public class EgaFileService {
             });
             List<EgaFile> egaFiles = new ArrayList<>();
             for (File file : files) {
-                String filename = file.getDisplayFileName();
+                String filename = file.getFileName();
+                String displayFilename = file.getDisplayFileName();
+
                 if (filename.toLowerCase().endsWith(".cip")) {
-                    if (filename.contains("/")) {
-                        filename = filename.substring(filename.lastIndexOf("/") + 1);
+                    if (displayFilename.contains("/")) {
+                        displayFilename = displayFilename.substring(displayFilename.lastIndexOf("/") + 1);
                     }
 
                     file.setFileSize(file.getFileSize() - 16);
-                    egaFiles.add(new EgaFile(filename.substring(0, filename.length() - 4), file, this));
+                    egaFiles.add(new EgaFile(displayFilename, file, this));
                 }
             }
             return egaFiles;
