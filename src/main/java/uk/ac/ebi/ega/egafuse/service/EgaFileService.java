@@ -111,10 +111,10 @@ public class EgaFileService {
     }
 
     public int fillBufferCurrentChunk(Pointer buffer, String fileId, long fileSize, long bytesToRead, long offset) {
-        int chunksize = (int) Math.min(fileSize - offset, bytesToRead);
+        int requestedChunkSize = (int) Math.min(fileSize - offset, bytesToRead);
         int chunkIndex = (int) (offset / chunkSize);
 
-        if (offset >= fileSize || chunksize <= 0)
+        if (offset >= fileSize || requestedChunkSize <= 0)
             return -1;
 
         prefetchChunk(fileId, chunkIndex, fileSize);
@@ -123,8 +123,8 @@ public class EgaFileService {
             byte[] chunk = cache.get(getCacheKey(fileId, chunkIndex, fileSize)).get();
             if (chunk != null) {
                 int chunkOffset = (int) (offset - chunkIndex * chunkSize);
-                buffer.put(0L, chunk, chunkOffset, chunksize);
-                return chunksize;
+                buffer.put(0L, chunk, chunkOffset, requestedChunkSize);
+                return requestedChunkSize;
             }
         } catch (InterruptedException | ExecutionException e) {
             LOGGER.error("Chunk {} could not be retrieved for file {} bytesToRead {} offset {} ", chunkIndex, fileId,
