@@ -52,9 +52,12 @@ public class FileChunkDownloadService implements IFileChunkDownloadService {
         long startCoordinate = cacheKey.getStartCoordinate();
         long bytesToRead = cacheKey.getChunkBytesToRead();
        
-        UriComponentsBuilder builder = UriComponentsBuilder.fromPath(apiURL.concat("/files/")).path(cacheKey.getFileId())
-                .queryParam("destinationFormat", "plain").queryParam("startCoordinate", startCoordinate)
-                .queryParam("endCoordinate", (startCoordinate + bytesToRead));
+        UriComponentsBuilder builder =  UriComponentsBuilder.fromPath(apiURL
+                                                            .concat("/files/"))
+                                                            .path(cacheKey.getFileId())
+                                                            .queryParam("destinationFormat", "plain")
+                                                            .queryParam("startCoordinate", startCoordinate)
+                                                            .queryParam("endCoordinate", (startCoordinate + bytesToRead));
 
         LOGGER.info("url = " + builder.toUriString());
 
@@ -83,8 +86,7 @@ public class FileChunkDownloadService implements IFileChunkDownloadService {
         case 200:
         case 206:
             byte[] buffer = new byte[(int) bytesToRead];
-            try (CountingInputStream cIn = new CountingInputStream(response.body().byteStream());
-                    DataInputStream dis = new DataInputStream(cIn);) {
+            try (DataInputStream dis = new DataInputStream(response.body().byteStream())) {
                 dis.readFully(buffer);
             }
             return buffer;

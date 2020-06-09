@@ -23,28 +23,26 @@ import uk.ac.ebi.ega.egafuse.model.File;
 
 public class EgaFile extends EgaPath {
     private File file;
-    private EgaFileService egaFileService;
+    private IEgaChunkBufferService egaChunkBufferService;
 
     public EgaFile(String name, EgaDirectory parent) {
         super(name, parent);
     }
 
-    public EgaFile(String name, File file, EgaFileService egaFileService) {
+    public EgaFile(String name, File file, IEgaChunkBufferService egaChunkBufferService) {
         super(name);
         this.file = file;
-        this.egaFileService = egaFileService;
+        this.egaChunkBufferService = egaChunkBufferService;
     }
 
     @Override
-    public void getattr(FileStat stat, long uid, long gid) {
+    public void getattr(FileStat stat) {
         stat.st_mode.set(FileStat.S_IFREG | 0644);
         stat.st_size.set(file.getFileSize());
-        stat.st_uid.set(uid);
-        stat.st_gid.set(gid);
     }
 
     public int read(Pointer buffer, long size, long offset) {
-        return egaFileService.fillBufferCurrentChunk(buffer, file.getFileId(), file.getFileSize(), size, offset);
+        return egaChunkBufferService.fillBuffer(buffer, file.getFileId(), file.getFileSize(), size, offset);
     }
 
     public int open() {

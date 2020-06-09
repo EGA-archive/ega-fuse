@@ -26,11 +26,11 @@ import ru.serce.jnrfuse.struct.FileStat;
 
 public class EgaDirectory extends EgaPath {
     protected List<EgaPath> contents = new ArrayList<>();
-    private EgaDatasetService egaDatasetService;
-    private EgaFileService egaFileService;
+    private IEgaDatasetService egaDatasetService;
+    private IEgaFileService egaFileService;
 
-    public EgaDirectory(String name, EgaDatasetService egaDatasetService,
-            EgaFileService egaFileService) {
+    public EgaDirectory(String name, IEgaDatasetService egaDatasetService,
+            IEgaFileService egaFileService) {
         super(name);
         this.egaDatasetService = egaDatasetService;
         this.egaFileService = egaFileService;
@@ -74,10 +74,8 @@ public class EgaDirectory extends EgaPath {
     }
 
     @Override
-    public void getattr(FileStat stat, long uid, long gid) {
+    public void getattr(FileStat stat) {
         stat.st_mode.set(FileStat.S_IFDIR | 0644);
-        stat.st_uid.set(uid);
-        stat.st_gid.set(gid);
     }
 
     public synchronized void read(Pointer buf, FuseFillDir filler) {

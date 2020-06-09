@@ -59,7 +59,7 @@ public class FileChunkDownloadServiceTest {
     }
 
     @Test
-    public void testDownloadChunk() throws ClientProtocolException, IOException {
+    public void downloadChunk_WhenGivenCacheKey_ThenReturnsFileBytes() throws ClientProtocolException, IOException {
         byte[] file = "testfiledata".getBytes();
         CacheKey cacheKey = new CacheKey(0, file.length, "EGAF00001");
 
@@ -74,7 +74,7 @@ public class FileChunkDownloadServiceTest {
     }
 
     @Test(expected = ClientProtocolException.class)
-    public void testDownloadChunk_ClientProtocolException() throws ClientProtocolException, IOException {
+    public void downloadChunk_WhenGivenExceptionByAppUrl_ThenThrowsException() throws IOException, ClientProtocolException {
         CacheKey cacheKey = new CacheKey(0, 12, "EGAF00001");
 
         String url = APP_URL.trim() + "/files/" + cacheKey.getFileId() + "?destinationFormat=plain&startCoordinate="

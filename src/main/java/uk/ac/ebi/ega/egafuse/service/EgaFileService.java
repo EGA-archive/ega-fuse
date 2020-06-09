@@ -21,44 +21,37 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 
-import jnr.ffi.Pointer;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
-import uk.ac.ebi.ega.egafuse.model.CacheKey;
 import uk.ac.ebi.ega.egafuse.model.File;
 
-public class EgaFileService {
+public class EgaFileService implements IEgaFileService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EgaFileService.class);
-    private int cachePrefetch;
     private OkHttpClient okHttpClient;
     private String apiURL;
-    private long chunkSize;
     private Token token;
     private ObjectMapper mapper;
-    private AsyncLoadingCache<CacheKey, byte[]> cache;
+    private IEgaChunkBufferService egaChunkBufferService;
 
-    public EgaFileService(OkHttpClient okHttpClient, String apiURL, long chunkSize, int cachePrefetch, Token token,
-            AsyncLoadingCache<CacheKey, byte[]> cache) {
+    public EgaFileService(OkHttpClient okHttpClient, String apiURL, Token token,
+            IEgaChunkBufferService egaChunkBufferService) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
-        this.chunkSize = chunkSize;
-        this.cachePrefetch = cachePrefetch;
         this.token = token;
         this.mapper = new ObjectMapper();
-        this.cache = cache;
+        this.egaChunkBufferService = egaChunkBufferService;
     }
 
+    @Override
     public List<EgaFile> getFiles(EgaDirectory egaDirectory) {
         String datasetId = egaDirectory.getName();
         if (datasetId.endsWith("/")) {
@@ -99,8 +92,9 @@ public class EgaFileService {
                         displayFilename = displayFilename.substring(displayFilename.lastIndexOf("/") + 1);
                     }
 
+                    // The initial 16 bytes are IV that is not part of decrypted file data so we remove it from the file size.
                     file.setFileSize(file.getFileSize() - 16);
-                    egaFiles.add(new EgaFile(displayFilename, file, this));
+                    egaFiles.add(new EgaFile(displayFilename, file, egaChunkBufferService));
                 }
             }
             return egaFiles;
@@ -108,44 +102,5 @@ public class EgaFileService {
             LOGGER.error("status: {}", status);
             throw new ClientProtocolException(response.body().string());
         }
-    }
-
-    public int fillBufferCurrentChunk(Pointer buffer, String fileId, long fileSize, long bytesToRead, long offset) {
-        int minBytesToRead = (int) Math.min(fileSize - offset, bytesToRead);
-        int chunkIndex = (int) (offset / chunkSize);
-
-        if (offset >= fileSize || minBytesToRead <= 0)
-            return -1;
-
-        prefetchChunk(fileId, chunkIndex, fileSize);
-
-        try {
-            byte[] chunk = cache.get(getCacheKey(fileId, chunkIndex, fileSize)).get();
-            if (chunk != null) {
-                int chunkOffset = (int) (offset - chunkIndex * chunkSize);
-                buffer.put(0L, chunk, chunkOffset, minBytesToRead);
-                return minBytesToRead;
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Chunk {} could not be retrieved for file {} bytesToRead {} offset {} ", chunkIndex, fileId,
-                    bytesToRead, offset);
-            LOGGER.error("Error in reading from cache - {} ", e.getMessage(), e);
-        } 
-        return -1;
-    }
-
-    private void prefetchChunk(String fileId, int chunkIndex, long fileSize) {
-        int maxChunk = (int) (fileSize / chunkSize);
-        int endChunk = Math.min(chunkIndex + cachePrefetch, maxChunk);
-
-        while (chunkIndex <= endChunk) {
-            cache.get(getCacheKey(fileId, chunkIndex++, fileSize));
-        }
-    }
-
-    private CacheKey getCacheKey(String fileId, int chunkIndex, long fileSize) {
-        long startCoordinate = chunkIndex * chunkSize;
-        long chunkBytesToRead = startCoordinate + chunkSize > fileSize ? (fileSize - startCoordinate) : chunkSize;
-        return new CacheKey(startCoordinate, chunkBytesToRead, fileId);
     }
 }

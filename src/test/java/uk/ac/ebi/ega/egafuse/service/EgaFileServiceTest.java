@@ -20,14 +20,9 @@ package uk.ac.ebi.ega.egafuse.service;
 import static okhttp3.mock.Behavior.UNORDERED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -40,35 +35,27 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 
 import jnr.ffi.Pointer;
 import okhttp3.OkHttpClient;
 import okhttp3.mock.MockInterceptor;
 import uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig;
-import uk.ac.ebi.ega.egafuse.model.CacheKey;
 import uk.ac.ebi.ega.egafuse.model.File;
 
 @TestPropertySource("classpath:application-test.properties")
 @ContextConfiguration(classes = EgaFuseApplicationConfig.class)
 @RunWith(SpringRunner.class)
 public class EgaFileServiceTest {
-    private EgaFileService egaFileService;
+    private IEgaFileService egaFileService;
     private MockInterceptor interceptor;
     private OkHttpClient client;
     private ObjectMapper objectMapper;
-
-    @Value("${api.chunksize}")
-    private long CHUNK_SIZE;
-
-    @Value("${cache.prefetch}")
-    private int PREFETCH;
 
     @Value("${app.url}")
     private String APP_URL;
 
     @Mock
-    private AsyncLoadingCache<CacheKey, byte[]> cache;
+    private EgaChunkBufferService bufferService;
 
     @Mock
     private Token token;
@@ -81,11 +68,11 @@ public class EgaFileServiceTest {
         objectMapper = new ObjectMapper();
         interceptor = new MockInterceptor(UNORDERED);
         client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
-        egaFileService = new EgaFileService(client, APP_URL, CHUNK_SIZE, PREFETCH, token, cache);
+        egaFileService = new EgaFileService(client, APP_URL, token, bufferService);
     }
 
     @Test
-    public void testGetFiles() throws JsonProcessingException {
+    public void getFiles_WhenGivenDirectory_ThenReturnsFiles() throws JsonProcessingException {
         EgaDirectory userDirectory = new EgaDirectory("EGAD00001", null, null);
         List<File> files = new ArrayList<>();
         File file = new File();
@@ -99,6 +86,8 @@ public class EgaFileServiceTest {
                 .respond(objectMapper.writeValueAsString(files));
 
         List<EgaFile> userFile = egaFileService.getFiles(userDirectory);
+        assertEquals(1, userFile.size());
+        
         File responseFile = userFile.get(0).getFile();
         assertEquals(file.getFileId(), responseFile.getFileId());
         assertEquals(file.getFileSize() - 16, responseFile.getFileSize());
@@ -107,7 +96,7 @@ public class EgaFileServiceTest {
     }
 
     @Test
-    public void testGetFiles_Cip_And_Gpg() throws JsonProcessingException {
+    public void getFiles_WhenGivenDirectory_ThenReturnsOnlyCipFiles() throws JsonProcessingException {
         EgaDirectory userDirecory = new EgaDirectory("EGAD00001", null, null);
         List<File> files = new ArrayList<>();
         File file1 = new File();
@@ -124,45 +113,16 @@ public class EgaFileServiceTest {
 
         List<EgaFile> userFile = egaFileService.getFiles(userDirecory);
         assertEquals(1, userFile.size());
+        assertEquals(file1.getFileName(), userFile.get(0).getFile().getFileName());
     }
 
     @Test
-    public void testGetFilesEmpty() {
+    public void getFiles_WhenGivenException_ThenReturnsNoFiles() {
         EgaDirectory userDirecory = new EgaDirectory("EGAD00001", null, null);
         interceptor.addRule().get(APP_URL.concat("/metadata/datasets/").concat(userDirecory.getName()).concat("/files"))
                 .respond(500);
 
         List<EgaFile> userFile = egaFileService.getFiles(userDirecory);
         assertTrue(userFile.isEmpty());
-    }
-
-    @Test
-    public void testFillBufferCurrentChunk() throws JsonProcessingException, InterruptedException, ExecutionException {
-        CompletableFuture<byte[]> future = mock(CompletableFuture.class);
-        when(cache.get(any())).thenReturn(future);
-        when(future.get()).thenReturn(new byte[] {});
-        long bytesToRead = 10l;
-        int chunksize = egaFileService.fillBufferCurrentChunk(pointer, "fileId", 100l, bytesToRead, 0l);
-        assertEquals(bytesToRead, chunksize);
-    }
-
-    @Test
-    public void testFillBufferCurrentChunk_null()
-            throws JsonProcessingException, InterruptedException, ExecutionException {
-        CompletableFuture<byte[]> future = mock(CompletableFuture.class);
-        when(cache.get(any())).thenReturn(future);
-        when(future.get()).thenReturn(null);
-        int chunksize = egaFileService.fillBufferCurrentChunk(pointer, "fileId", 100l, 10l, 0l);
-        assertEquals(-1, chunksize);
-    }
-
-    @Test
-    public void testFillBufferCurrentChunk_exception()
-            throws JsonProcessingException, InterruptedException, ExecutionException {
-        CompletableFuture<byte[]> future = mock(CompletableFuture.class);
-        when(cache.get(any())).thenReturn(future);
-        when(future.get()).thenThrow(InterruptedException.class);
-        int chunksize = egaFileService.fillBufferCurrentChunk(pointer, "fileId", 100l, 10l, 0l);
-        assertEquals(-1, chunksize);
     }
 }

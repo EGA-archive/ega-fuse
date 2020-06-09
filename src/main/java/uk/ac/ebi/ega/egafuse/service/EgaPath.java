@@ -42,7 +42,7 @@ public abstract class EgaPath {
         return null;
     }
 
-    public abstract void getattr(FileStat stat, long uid, long gid);
+    public abstract void getattr(FileStat stat);
 
     public String getName() {
         return this.name;

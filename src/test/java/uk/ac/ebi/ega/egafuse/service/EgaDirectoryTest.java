@@ -44,10 +44,10 @@ public class EgaDirectoryTest {
     private EgaDirectory egaParentdirectory;
 
     @Mock
-    private EgaDatasetService egaDatasetService;
+    private IEgaDatasetService egaDatasetService;
 
     @Mock
-    private EgaFileService egaFileService;
+    private IEgaFileService egaFileService;
 
     @Mock
     private Pointer pointer;
@@ -61,13 +61,13 @@ public class EgaDirectoryTest {
     }
 
     @Test
-    public void testFindPath() {
+    public void find_WhenGivenDirectoryName_ThenReturnsEgaPath() {
         EgaPath path = egaParentdirectory.find(egaParentdirectory.getName());
         assertEquals(path.getName(), egaParentdirectory.getName());
     }
 
     @Test
-    public void testReadDatasets() {
+    public void readDatasets_WhenGivenEgaDirectory_ThenReturnsEgaPath() {
         EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
         egaParentdirectory.add(directory);
         List<EgaDirectory> egaDirectorys = new ArrayList<>();
@@ -80,7 +80,7 @@ public class EgaDirectoryTest {
     }
 
     @Test
-    public void testReadFiles() {
+    public void readFiles_WhenGivenEgaFile_ThenReturnsEgaPath() {
         EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
         egaFiles.add(egaFile);
@@ -92,7 +92,7 @@ public class EgaDirectoryTest {
     }
 
     @Test
-    public void testDeleteChild() {
+    public void deleteChild_WhenGivenEgaFile_ThenReturnsNoPath() {
         EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
         egaFiles.add(egaFile);

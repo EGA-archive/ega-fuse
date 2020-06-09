@@ -33,15 +33,15 @@ import okhttp3.Request;
 import okhttp3.Response;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
 
-public class EgaDatasetService {
+public class EgaDatasetService implements IEgaDatasetService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EgaDatasetService.class);
-    private EgaFileService egaFileService;
+    private IEgaFileService egaFileService;
     private OkHttpClient okHttpClient;
     private String apiURL;
     private Token token;
     private ObjectMapper mapper;
 
-    public EgaDatasetService(OkHttpClient okHttpClient, String apiURL, Token token, EgaFileService egaFileService) {
+    public EgaDatasetService(OkHttpClient okHttpClient, String apiURL, Token token, IEgaFileService egaFileService) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
         this.token = token;
@@ -49,6 +49,7 @@ public class EgaDatasetService {
         this.mapper = new ObjectMapper();
     }
 
+    @Override
     public List<EgaDirectory> getDatasets() {
         try {
             Request datasetRequest = new Request.Builder().url(apiURL + "/metadata/datasets")

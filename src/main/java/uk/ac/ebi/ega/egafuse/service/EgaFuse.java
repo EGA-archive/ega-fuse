@@ -65,7 +65,9 @@ public class EgaFuse extends FuseStubFS {
     public int getattr(String path, FileStat stat) {
         EgaPath p = getPath(path);
         if (p != null) {
-            p.getattr(stat, getContext().uid.get(), getContext().gid.get());
+            p.getattr(stat);
+            stat.st_uid.set(getContext().uid.get());
+            stat.st_gid.set(getContext().gid.get());
             return 0;
         }
         return -ErrorCodes.ENOENT();

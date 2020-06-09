@@ -45,7 +45,7 @@ import uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig;
 @RunWith(SpringRunner.class)
 public class EgaDatasetServiceTest {
 
-    private EgaDatasetService egaDatasetService;
+    private IEgaDatasetService egaDatasetService;
     private MockInterceptor interceptor;
     private OkHttpClient client;
 
@@ -53,7 +53,7 @@ public class EgaDatasetServiceTest {
     private String APP_URL;
 
     @Mock
-    private EgaFileService egaFileService;
+    private IEgaFileService egaFileService;
 
     @Mock
     private Token token;
@@ -66,7 +66,7 @@ public class EgaDatasetServiceTest {
     }
 
     @Test
-    public void testGetDatasets() throws JsonProcessingException {
+    public void getDatasets_WhenGivenDataset_ThenReturnsDatasets() throws JsonProcessingException {
         List<String> dataset = new ArrayList<String>();
         dataset.add("EGAD00001");
         dataset.add("EGAD00002");
@@ -79,7 +79,7 @@ public class EgaDatasetServiceTest {
     }
 
     @Test
-    public void testGetEmptyDataset() {
+    public void getDatasets_WhenGivenException_ThenReturnsNoDataset() {
         interceptor.addRule().get(APP_URL + "/metadata/datasets").respond(500);
 
         List<EgaDirectory> userDataset = egaDatasetService.getDatasets();
