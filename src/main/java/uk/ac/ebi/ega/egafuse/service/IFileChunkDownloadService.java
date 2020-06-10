@@ -15,21 +15,13 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.egafuse.runner;
+package uk.ac.ebi.ega.egafuse.service;
 
-import org.springframework.boot.CommandLineRunner;
+import java.io.IOException;
 
-import uk.ac.ebi.ega.egafuse.service.EgaFuse;
+import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
+import uk.ac.ebi.ega.egafuse.model.CacheKey;
 
-public class EgaFuseCommandLineRunner implements CommandLineRunner {
-    private EgaFuse egaFuse;
-
-    public EgaFuseCommandLineRunner(EgaFuse egaFuse) {
-        this.egaFuse = egaFuse;
-    }
-    
-    @Override
-    public void run(String... args) {
-        egaFuse.start();
-    }
+public interface IFileChunkDownloadService {
+    byte[] downloadChunk(CacheKey cacheKey) throws IOException, ClientProtocolException;
 }

@@ -22,10 +22,12 @@ import java.io.IOException;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.core.env.PropertySource;
+import org.springframework.retry.annotation.EnableRetry;
 
 import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionParser;
 import uk.ac.ebi.ega.egafuse.runner.CommandLineOptionPropertySource;
 
+@EnableRetry
 @SpringBootApplication
 public class EgaFuseApplication {
     public static void main(String[] args) throws IOException {

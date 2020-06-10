@@ -33,15 +33,15 @@ import okhttp3.Request;
 import okhttp3.Response;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
 
-public class EgaDatasetService {
+public class EgaDatasetService implements IEgaDatasetService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EgaDatasetService.class);
-    private EgaFileService egaFileService;
+    private IEgaFileService egaFileService;
     private OkHttpClient okHttpClient;
     private String apiURL;
     private Token token;
     private ObjectMapper mapper;
 
-    public EgaDatasetService(OkHttpClient okHttpClient, String apiURL, Token token, EgaFileService egaFileService) {
+    public EgaDatasetService(OkHttpClient okHttpClient, String apiURL, Token token, IEgaFileService egaFileService) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
         this.token = token;
@@ -49,6 +49,7 @@ public class EgaDatasetService {
         this.mapper = new ObjectMapper();
     }
 
+    @Override
     public List<EgaDirectory> getDatasets() {
         try {
             Request datasetRequest = new Request.Builder().url(apiURL + "/metadata/datasets")
@@ -57,12 +58,12 @@ public class EgaDatasetService {
             try (Response response = okHttpClient.newCall(datasetRequest).execute()) {
                 return buildResponseGetDataset(response);
             } catch (IOException e) {
-                throw new IOException("Unable to execute request. Can be retried.", e);
+                throw new IOException("Unable to execute request. Can't be retried.", e);
             } catch (ClientProtocolException e) {
                 throw e;
             }
         } catch (Exception e) {
-            LOGGER.error("Error in get dataset - {}", e.getMessage());
+            LOGGER.error("Error in get dataset - {}", e.getMessage(), e);
         }
         return Collections.emptyList();
     }

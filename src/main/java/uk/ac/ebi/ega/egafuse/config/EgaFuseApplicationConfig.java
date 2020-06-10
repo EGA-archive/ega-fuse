@@ -17,42 +17,50 @@
  */
 package uk.ac.ebi.ega.egafuse.config;
 
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.guava.GuavaCache;
-import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.common.cache.CacheBuilder;
 
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
+import uk.ac.ebi.ega.egafuse.model.CacheKey;
 import uk.ac.ebi.ega.egafuse.runner.EgaFuseCommandLineRunner;
+import uk.ac.ebi.ega.egafuse.service.EgaChunkBufferService;
 import uk.ac.ebi.ega.egafuse.service.EgaDatasetService;
 import uk.ac.ebi.ega.egafuse.service.EgaDirectory;
 import uk.ac.ebi.ega.egafuse.service.EgaFileService;
 import uk.ac.ebi.ega.egafuse.service.EgaFuse;
+import uk.ac.ebi.ega.egafuse.service.FileChunkDownloadService;
+import uk.ac.ebi.ega.egafuse.service.IEgaChunkBufferService;
+import uk.ac.ebi.ega.egafuse.service.IEgaDatasetService;
+import uk.ac.ebi.ega.egafuse.service.IEgaFileService;
+import uk.ac.ebi.ega.egafuse.service.IFileChunkDownloadService;
 import uk.ac.ebi.ega.egafuse.service.Token;
 
 @Configuration
-@EnableCaching
 public class EgaFuseApplicationConfig {
+    @Value("${app.url}")
+    private String appUrl;
+
+    @Value("${api.chunksize}")
+    private long chunkSize;
+
     @Bean
-    public CacheManager cacheManager(@Value("${maxCache}") int MAX_CACHE_SIZE) {
-        SimpleCacheManager simpleCacheManager = new SimpleCacheManager();
-        GuavaCache archive = new GuavaCache("archive",
-                CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.HOURS).maximumSize(MAX_CACHE_SIZE).build());
-        simpleCacheManager.setCaches(Arrays.asList(archive));
-        return simpleCacheManager;
+    public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE,
+            IFileChunkDownloadService fileChunkDownloadService) {
+        return  Caffeine.newBuilder()
+                        .expireAfterWrite(5, TimeUnit.HOURS)
+                        .maximumSize(MAX_CACHE_SIZE)
+                        .buildAsync(fileChunkDownloadService::downloadChunk);
     }
 
     @Bean
@@ -62,9 +70,8 @@ public class EgaFuseApplicationConfig {
             @Value("${connection}") int CONNECTION) {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         ConnectionPool connectionPool = new ConnectionPool(CONNECTION, DEFAULT_KEEP_ALIVE_TIMEOUT, TimeUnit.MINUTES);
-        OkHttpClient okHttpClient = builder.connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MINUTES)
+        return builder.connectTimeout(DEFAULT_CONNECTION_TIMEOUT, TimeUnit.MINUTES)
                 .readTimeout(DEFAULT_REQUEST_TIMEOUT, TimeUnit.MINUTES).connectionPool(connectionPool).build();
-        return okHttpClient;
     }
 
     @Bean
@@ -77,25 +84,34 @@ public class EgaFuseApplicationConfig {
     @Bean
     public Token token(@Value("${cred.username}") String username, @Value("${cred.password}") String password,
             @Value("${ega.userId}") String egaUserId, @Value("${ega.userSecret}") String egaUserSecret,
-            @Value("${ega.userGrant}") String egaUserGrant, @Value("${aai.server.url}") String aaiUrl) {
+            @Value("${ega.userGrant}") String egaUserGrant, @Value("${aai.url}") String aaiUrl) {
         return new Token(new NetHttpTransport(), new JacksonFactory(), username, password, egaUserId, egaUserSecret,
                 egaUserGrant, aaiUrl);
     }
 
     @Bean
-    public EgaFileService initEgaFileService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            Token token) {
-        return new EgaFileService(okHttpClient, apiURL, token);
+    public IFileChunkDownloadService initEgaRetryService(OkHttpClient okHttpClient, Token token) {
+        return new FileChunkDownloadService(okHttpClient, appUrl, token);
     }
 
     @Bean
-    public EgaDatasetService initEgaDatasetService(OkHttpClient okHttpClient, @Value("${app.server.url}") String apiURL,
-            Token token, EgaFileService egaFileService) {
-        return new EgaDatasetService(okHttpClient, apiURL, token, egaFileService);
+    public IEgaFileService initEgaFileService(OkHttpClient okHttpClient, Token token, IEgaChunkBufferService egaChunkBufferService) {
+        return new EgaFileService(okHttpClient, appUrl, token, egaChunkBufferService);
+    }
+    
+    @Bean
+    public IEgaChunkBufferService egaChunkBufferService(@Value("${cache.prefetch}") int cachePrefetch, AsyncLoadingCache<CacheKey, byte[]> cache) {
+        return new EgaChunkBufferService(chunkSize, cachePrefetch, cache);
     }
 
     @Bean
-    public EgaFuse initEgaFuse(@Value("${mountPath}") String mountPath, EgaDatasetService egaDatasetService, EgaFileService egaFileService) {
+    public IEgaDatasetService initEgaDatasetService(OkHttpClient okHttpClient, Token token, IEgaFileService egaFileService) {
+        return new EgaDatasetService(okHttpClient, appUrl, token, egaFileService);
+    }
+
+    @Bean
+    public EgaFuse initEgaFuse(@Value("${mountPath}") String mountPath, IEgaDatasetService egaDatasetService,
+            IEgaFileService egaFileService) {
         EgaDirectory egaDirectory = new EgaDirectory("Datasets", egaDatasetService, egaFileService);
         return new EgaFuse(egaDirectory, mountPath);
     }

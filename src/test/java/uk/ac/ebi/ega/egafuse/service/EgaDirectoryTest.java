@@ -17,8 +17,9 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -42,63 +42,63 @@ import uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig;
 public class EgaDirectoryTest {
 
     private EgaDirectory egaParentdirectory;
-    
+
     @Mock
-    private EgaDatasetService egaDatasetService;
-    
+    private IEgaDatasetService egaDatasetService;
+
     @Mock
-    private EgaFileService egaFileService;
-    
+    private IEgaFileService egaFileService;
+
     @Mock
-    Pointer pointer;
-    
+    private Pointer pointer;
+
     @Mock
     private FuseFillDir fuseFillDir;
-    
+
     @Before
     public void before() {
         egaParentdirectory = new EgaDirectory("directory", egaDatasetService, egaFileService);
     }
-    
+
     @Test
-    public void testFindPath() {
+    public void find_WhenGivenDirectoryName_ThenReturnsEgaPath() {
         EgaPath path = egaParentdirectory.find(egaParentdirectory.getName());
         assertEquals(path.getName(), egaParentdirectory.getName());
     }
-    
+
     @Test
-    public void testReadDatasets() {
+    public void readDatasets_WhenGivenEgaDirectory_ThenReturnsEgaPath() {
         EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
-        egaParentdirectory.add(directory);        
+        egaParentdirectory.add(directory);
         List<EgaDirectory> egaDirectorys = new ArrayList<>();
         egaDirectorys.add(directory);
-        Mockito.when(egaDatasetService.getDatasets()).thenReturn(egaDirectorys);
+        when(egaDatasetService.getDatasets()).thenReturn(egaDirectorys);
         egaParentdirectory.read(pointer, fuseFillDir);
-        
-        List<EgaPath> contents  = egaParentdirectory.contents;
+
+        List<EgaPath> contents = egaParentdirectory.contents;
         assertEquals(egaDirectorys.get(0).getName(), contents.get(0).getName());
     }
-    
+
     @Test
-    public void testReadFiles() {
+    public void readFiles_WhenGivenEgaFile_ThenReturnsEgaPath() {
         EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
-        egaFiles.add(egaFile);        
-        Mockito.when(egaFileService.getFiles(egaParentdirectory)).thenReturn(egaFiles);
+        egaFiles.add(egaFile);
+        when(egaFileService.getFiles(egaParentdirectory)).thenReturn(egaFiles);
         egaParentdirectory.read(pointer, fuseFillDir);
 
-        List<EgaPath> contents  = egaParentdirectory.contents;
+        List<EgaPath> contents = egaParentdirectory.contents;
         assertEquals(egaFile.getName(), contents.get(0).getName());
     }
-    
+
     @Test
-    public void testDeleteChild() {
+    public void deleteChild_WhenGivenEgaFile_ThenReturnsNoPath() {
         EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
-        egaFiles.add(egaFile);        
+        egaFiles.add(egaFile);
 
         egaParentdirectory.deleteChild(egaFile);
-        List<EgaPath> contents  = egaParentdirectory.contents;
+        List<EgaPath> contents = egaParentdirectory.contents;
         assertTrue(contents.isEmpty());
     }
 }

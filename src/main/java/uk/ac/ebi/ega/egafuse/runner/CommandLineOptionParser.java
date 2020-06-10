@@ -73,7 +73,7 @@ public class CommandLineOptionParser {
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
         parser.accepts("p", "password").requiredIf("u").withRequiredArg();
-        parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(1);
+        parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
         parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
         parser.accepts("m", "mount path").withRequiredArg().withValuesConvertedBy(new PathConverter())
                 .defaultsTo(Paths.get("/tmp/mnt"));

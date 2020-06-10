@@ -15,21 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.egafuse.runner;
+package uk.ac.ebi.ega.egafuse.service;
 
-import org.springframework.boot.CommandLineRunner;
+import jnr.ffi.Pointer;
 
-import uk.ac.ebi.ega.egafuse.service.EgaFuse;
-
-public class EgaFuseCommandLineRunner implements CommandLineRunner {
-    private EgaFuse egaFuse;
-
-    public EgaFuseCommandLineRunner(EgaFuse egaFuse) {
-        this.egaFuse = egaFuse;
-    }
-    
-    @Override
-    public void run(String... args) {
-        egaFuse.start();
-    }
+public interface IEgaChunkBufferService {
+    int fillBuffer(Pointer buffer, String fileId, long fileSize, long bytesToRead, long offset);
 }

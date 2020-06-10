@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
+import java.io.IOException;
+
 import com.google.api.client.auth.oauth2.PasswordTokenRequest;
 import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.http.BasicAuthentication;
@@ -47,7 +49,7 @@ public class Token {
         this.aaiUrl = aaiUrl;
     }
 
-    public String getBearerToken() throws Exception {
+    public String getBearerToken() throws IOException {
         TokenResponse response = new PasswordTokenRequest(httpTransport, jsonFactory,
                 new GenericUrl(aaiUrl.concat("/token")), username, password).setGrantType(egaUserGrant)
                         .setClientAuthentication(new BasicAuthentication(egaUserId, egaUserSecret)).execute();

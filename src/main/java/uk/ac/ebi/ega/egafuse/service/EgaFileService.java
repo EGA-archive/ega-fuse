@@ -34,20 +34,24 @@ import okhttp3.Response;
 import uk.ac.ebi.ega.egafuse.exception.ClientProtocolException;
 import uk.ac.ebi.ega.egafuse.model.File;
 
-public class EgaFileService {
+public class EgaFileService implements IEgaFileService {
     private static final Logger LOGGER = LoggerFactory.getLogger(EgaFileService.class);
     private OkHttpClient okHttpClient;
     private String apiURL;
     private Token token;
     private ObjectMapper mapper;
+    private IEgaChunkBufferService egaChunkBufferService;
 
-    public EgaFileService(OkHttpClient okHttpClient, String apiURL, Token token) {
+    public EgaFileService(OkHttpClient okHttpClient, String apiURL, Token token,
+            IEgaChunkBufferService egaChunkBufferService) {
         this.okHttpClient = okHttpClient;
         this.apiURL = apiURL;
         this.token = token;
         this.mapper = new ObjectMapper();
+        this.egaChunkBufferService = egaChunkBufferService;
     }
 
+    @Override
     public List<EgaFile> getFiles(EgaDirectory egaDirectory) {
         String datasetId = egaDirectory.getName();
         if (datasetId.endsWith("/")) {
@@ -67,13 +71,12 @@ public class EgaFileService {
                 throw e;
             }
         } catch (Exception e) {
-            LOGGER.error("Error in get dataset - {}", e.getMessage());
+            LOGGER.error("Error in get dataset - {}", e.getMessage(), e);
         }
         return Collections.emptyList();
     }
 
-    private List<EgaFile> buildResponseGetFiles(final Response response)
-            throws IOException, ClientProtocolException {
+    private List<EgaFile> buildResponseGetFiles(final Response response) throws IOException, ClientProtocolException {
         final int status = response.code();
         switch (status) {
         case 200:
@@ -81,19 +84,18 @@ public class EgaFileService {
             });
             List<EgaFile> egaFiles = new ArrayList<>();
             for (File file : files) {
-                String filename = file.getDisplayFileName();
-                if (filename.contains("/")) {
-                    filename = filename.substring(filename.lastIndexOf("/") + 1);
-                }
+                String filename = file.getFileName();
+                String displayFilename = file.getDisplayFileName();
 
-                String type = "SOURCE";
-                if (filename.toLowerCase().endsWith(".gpg")) {
-                    type = "GPG";
-                } else if (filename.toLowerCase().endsWith(".cip")) {
-                    type = "CIP";
-                }
+                if (filename.toLowerCase().endsWith(".cip")) {
+                    if (displayFilename.contains("/")) {
+                        displayFilename = displayFilename.substring(displayFilename.lastIndexOf("/") + 1);
+                    }
 
-                egaFiles.add(new EgaFile(filename.substring(0, filename.length() - 4), type, file));
+                    // The initial 16 bytes are IV that is not part of decrypted file data so we remove it from the file size.
+                    file.setFileSize(file.getFileSize() - 16);
+                    egaFiles.add(new EgaFile(displayFilename, file, egaChunkBufferService));
+                }
             }
             return egaFiles;
         default:

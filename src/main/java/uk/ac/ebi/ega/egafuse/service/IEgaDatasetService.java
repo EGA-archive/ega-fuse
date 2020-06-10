@@ -15,21 +15,10 @@
  * limitations under the License.
  *
  */
-package uk.ac.ebi.ega.egafuse.runner;
+package uk.ac.ebi.ega.egafuse.service;
 
-import org.springframework.boot.CommandLineRunner;
+import java.util.List;
 
-import uk.ac.ebi.ega.egafuse.service.EgaFuse;
-
-public class EgaFuseCommandLineRunner implements CommandLineRunner {
-    private EgaFuse egaFuse;
-
-    public EgaFuseCommandLineRunner(EgaFuse egaFuse) {
-        this.egaFuse = egaFuse;
-    }
-    
-    @Override
-    public void run(String... args) {
-        egaFuse.start();
-    }
+public interface IEgaDatasetService {
+    List<EgaDirectory> getDatasets();
 }
