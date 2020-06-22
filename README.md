@@ -58,15 +58,15 @@ or
 In Linux the fuse layer can also be started, stopped and restarted using shell script ./fuseclient.sh as:
 
 ```
- ./fuseclient.sh start "--u=USERNAME --p=PASSWORD"
+./fuseclient.sh start "--u=USERNAME --p=PASSWORD"
 ```
  
 ```
-  ./fuseclient.sh restart "--u=USERNAME --p=PASSWORD"
+./fuseclient.sh restart "--u=USERNAME --p=PASSWORD"
 ```
 
 ``` 
-  ./fuseclient.sh stop
+./fuseclient.sh stop
 ```
 
 Optional arguments:
