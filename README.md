@@ -24,13 +24,6 @@ sudo apt-get install libfuse-dev
 brew cask install osxfuse
 ```
 
-#### Windows
-
-[`winfsp`](https://github.com/billziss-gh/winfsp) needs to be installed.
-```
-choco install winfsp
-```
-
 
 ## Build the project
 
@@ -72,8 +65,7 @@ In Linux the fuse layer can also be started, stopped and restarted using shell s
 Optional arguments:
 * u : username
 * p : password
-* m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path should not exist in the
- system and it will be created by this application`
+* m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path should exist`
 * cache : the maximum size of the cache, default value: 100 `Means 100 * 10 MB = 1000 MB`
 * c : connections, download using specified number of connections, default value: 4
 * h : help, show this help message and exit
@@ -84,7 +76,7 @@ password:egarocks
 ```
 
 ### Troubleshoot fuseclient.sh
-Check the log file fuse-client-logs.log, If you see any error as /tmp/mnt can not be used as mount point. Try running below command
+Check the log file fuse-client-logs.log, If you see any error as `fuse: bad mount point /tmp/mnt: Transport endpoint is not connected.` Try running below command
 
 ```
 umount -l /tmp/mnt
@@ -92,5 +84,4 @@ umount -l /tmp/mnt
 
 ## Supported platforms
 * Linux                                                         
-* MacOS (via [osxfuse](https://osxfuse.github.io/))            
-* Windows (via [winfsp](https://github.com/billziss-gh/winfsp/)) 
+* MacOS (via [osxfuse](https://osxfuse.github.io/))
