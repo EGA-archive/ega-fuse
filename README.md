@@ -1,6 +1,6 @@
 # EGA FUSE Client
-This is a Java Native Runtime (JNR) based FUSE client to access the EGA Data REST API. This client will allow access 
-to authorized EGA Archive files by presenting them in a vitual directory, where then can be used like regular files, 
+This is a Java Native Runtime (JNR) based Filesystem in Userspace (FUSE) client to access the EGA Data REST API. This client will allow access 
+to authorized EGA Archive files by presenting them in a vitual directory, where they can be used like regular files, 
 without first having to download them.
 
 ## Prerequisite dependencies
@@ -27,14 +27,14 @@ brew cask install osxfuse
 
 ## Build the project
 
-To build the project run below command. It will produce the executable jar file in the /target directory.
+To build the project run the command below. It will produce the executable jar file in the /target directory.
 ```
 mvn install
 ```
 
 ## Run the project
 
-Use below command to run the jar
+Use the command below to run the jar
 ```
 java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --u=USERNAME --p=PASSWORD
 ```
@@ -65,7 +65,7 @@ In Linux the fuse layer can also be started, stopped and restarted using shell s
 Optional arguments:
 * u : username
 * p : password
-* m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path should exist`
+* m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path exists`
 * cache : the maximum size of the cache, default value: 100 `Means 100 * 10 MB = 1000 MB`
 * c : connections, download using specified number of connections, default value: 4
 * h : help, show this help message and exit
@@ -76,7 +76,7 @@ password:egarocks
 ```
 
 ### Troubleshoot fuseclient.sh
-Check the log file fuse-client-logs.log, If you see any error as `fuse: bad mount point /tmp/mnt: Transport endpoint is not connected.` Try running below command
+Check the log file fuse-client-logs.log. If you see any error as `fuse: bad mount point /tmp/mnt: Transport endpoint is not connected.`, try running the command below
 
 ```
 umount -l /tmp/mnt
