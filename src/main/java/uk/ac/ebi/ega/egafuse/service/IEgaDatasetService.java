@@ -21,4 +21,6 @@ import java.util.List;
 
 public interface IEgaDatasetService {
     List<EgaDirectory> getDatasets();
+    
+    void buildFileDirectoryFromFilePath(List<EgaFile> egaFiles, EgaDirectory directory);
 }

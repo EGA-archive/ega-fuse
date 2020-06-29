@@ -53,6 +53,13 @@ public class EgaFuseApplicationConfig {
 
     @Value("${api.chunksize}")
     private long chunkSize;
+    
+    public static boolean isTreeStructureEnable;
+    
+    @Value("${tree}")
+    public void setFileDatabaseService(boolean isTreeStructure) {
+        isTreeStructureEnable = isTreeStructure;
+    }
 
     @Bean
     public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE,

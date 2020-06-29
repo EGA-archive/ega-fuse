@@ -20,6 +20,7 @@ package uk.ac.ebi.ega.egafuse.model;
 import java.nio.file.Path;
 
 public class CliConfigurationValues {
+    private boolean isTreeStructureEnable;
     private int connection;
     private int maxCache;
     private Path mountPath;
@@ -56,10 +57,18 @@ public class CliConfigurationValues {
     public void setCredential(Credential credential) {
         this.credential = credential;
     }
+    
+    public boolean isTreeStructureEnable() {
+        return isTreeStructureEnable;
+    }
+
+    public void setTreeStructureEnable(boolean isTreeStructureEnable) {
+        this.isTreeStructureEnable = isTreeStructureEnable;
+    }
 
     @Override
     public String toString() {
         return "CliConfigurationValues [credential=" + credential + ", maxCache=" + maxCache + ", connection=" + connection + ", mountPath="
-                + mountPath + "]";
+                + mountPath + ", isTreeStructureEnable=" + isTreeStructureEnable + "]";
     }
 }

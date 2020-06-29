@@ -62,6 +62,9 @@ public class CommandLineOptionParser {
                     .concat(" can't be used as mount point. Ensure that the directory path should exist."));
         }
         cliConfigurationValues.setMountPath(mntPath);
+        cliConfigurationValues
+                .setTreeStructureEnable(optionSet.valueOf("t").toString().equalsIgnoreCase("disable") ? false : true);
+
         return cliConfigurationValues;
     }
 
@@ -74,6 +77,7 @@ public class CommandLineOptionParser {
         parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
         parser.accepts("p", "password").requiredIf("u").withRequiredArg();
         parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
+        parser.accepts("t", "tree structure").withRequiredArg().defaultsTo("enable");
         parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
         parser.accepts("m", "mount path").withRequiredArg().withValuesConvertedBy(new PathConverter())
                 .defaultsTo(Paths.get("/tmp/mnt"));
