@@ -81,7 +81,7 @@ public class EgaDirectoryTest {
 
     @Test
     public void readFiles_WhenGivenEgaFile_ThenReturnsEgaPath() {
-        EgaFile egaFile = new EgaFile("files1", egaParentdirectory);
+        EgaFile egaFile = new EgaFile("files1.cip", egaParentdirectory);
         List<EgaFile> egaFiles = new ArrayList<>();
         egaFiles.add(egaFile);
         when(egaFileService.getFiles(egaParentdirectory)).thenReturn(egaFiles);

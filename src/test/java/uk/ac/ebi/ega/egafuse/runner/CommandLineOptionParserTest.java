@@ -17,7 +17,9 @@
  */
 package uk.ac.ebi.ega.egafuse.runner;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -106,5 +108,23 @@ public class CommandLineOptionParserTest {
         String[] args = { "-m", "/randomVal", "-u", "amohan", "-p", "testpass"};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CommandLineOptionParser.parser(set);
+    }
+    
+    @Test
+    public void parser_WhenGivenTreeOptionDisable_ThenReturnsFalse() throws IOException{        
+        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", "disable"};
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
+        assertFalse(cliConfigurationValues.isTreeStructureEnable());
+    }
+    
+    @Test
+    public void parser_WhenGivenTreeOptionEnable_ThenReturnsTrue() throws IOException{        
+        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", "enable"};
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
+        assertTrue(cliConfigurationValues.isTreeStructureEnable());
     }
 }

@@ -90,13 +90,13 @@ public class EgaDatasetService implements IEgaDatasetService {
     }
 
     @Override
-    public void buildFileDirectoryFromFilePath(List<EgaFile> egaFiles, EgaDirectory datasetRootNode) {
+    public void buildSubDirectoryFromFilePath(List<EgaFile> egaFiles, EgaDirectory datasetRootNode) {
         Map<String, EgaDirectory> filePathDirectory = new HashMap<>();
 
         for (EgaFile egaFile : egaFiles) {
             EgaDirectory currentDirectory = null;
-            String filePath = egaFile.getFile().getFilePath();
-
+            String filePath = recreateFilePath(egaFile.getFile().getFilePath().trim());
+                    
             // if file does not have any directory
             if (filePath.endsWith(".cip")) {
                 filePathDirectory.put(filePath, datasetRootNode);
@@ -109,33 +109,50 @@ public class EgaDatasetService implements IEgaDatasetService {
             }
             // if directory doesn't exists
             else {
-                filePath = filePath.startsWith("/") ? filePath.substring(1, filePath.length()) : filePath;
-                String subPaths[] = filePath.split("/");
-                String pathSoFar = "";
-                EgaDirectory subPathDirectory = null;
-
-                for (String subPath : subPaths) {
-                    pathSoFar = pathSoFar.isEmpty() ? subPath : pathSoFar.concat("/").concat(subPath);
-
-                    if (filePathDirectory.get(pathSoFar) == null) {
-                        subPathDirectory = new EgaDirectory(subPath, this, egaFileService);
-
-                        // create first child of datasetRootNode
-                        if (currentDirectory == null) {
-                            datasetRootNode.add(subPathDirectory);
-                            filePathDirectory.put(pathSoFar, subPathDirectory);
-                        } else {
-                            currentDirectory.add(subPathDirectory);
-                            filePathDirectory.put(pathSoFar, subPathDirectory);
-                        }
-                    } else {
-                        subPathDirectory = filePathDirectory.get(pathSoFar);
-                    }
-                    currentDirectory = subPathDirectory;
-                }
-                currentDirectory.add(egaFile);
+                createSubDirectory(filePath, filePathDirectory, currentDirectory, datasetRootNode, egaFile);
             }
         }
     }
     
+    private String recreateFilePath(String filePath) {
+        String pathSoFar = "";
+        for(String subPath: filePath.split("/")) {
+            if(!subPath.trim().isEmpty()) {
+                pathSoFar = pathSoFar.isEmpty() ? subPath.trim() : pathSoFar.concat("/").concat(subPath.trim());
+            }            
+        }
+        return pathSoFar;
+    }
+
+    private void createSubDirectory(String filePath, Map<String, EgaDirectory> filePathDirectory,
+            EgaDirectory currentDirectory, EgaDirectory datasetRootNode, EgaFile egaFile) {
+        String subPaths[] = filePath.split("/");
+        String pathSoFar = "";
+        EgaDirectory subPathDirectory = null;
+
+        // create directory
+        for (String subPath : subPaths) {
+            pathSoFar = pathSoFar.isEmpty() ? subPath.trim() : pathSoFar.concat("/").concat(subPath.trim());
+
+            if (filePathDirectory.get(pathSoFar) == null) {
+                subPathDirectory = new EgaDirectory(subPath, this, egaFileService);
+
+                // create first child of datasetRootNode
+                if (currentDirectory == null) {
+                    datasetRootNode.add(subPathDirectory);
+                    filePathDirectory.put(pathSoFar, subPathDirectory);
+                } else {
+                    currentDirectory.add(subPathDirectory);
+                    filePathDirectory.put(pathSoFar, subPathDirectory);
+                }
+            } else {
+                subPathDirectory = filePathDirectory.get(pathSoFar);
+            }
+            currentDirectory = subPathDirectory;
+        }
+
+        // add file to current directory
+        currentDirectory.add(egaFile);
+    }
+
 }

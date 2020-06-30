@@ -88,7 +88,7 @@ public class EgaDirectory extends EgaPath {
                 List<EgaFile> egaFiles = egaFileService.getFiles(this);
 
                 if (isTreeStructureEnable)
-                    egaDatasetService.buildFileDirectoryFromFilePath(egaFiles, this);
+                    egaDatasetService.buildSubDirectoryFromFilePath(egaFiles, this);
                 else
                     egaFiles.stream().forEach(this::add);
             }
