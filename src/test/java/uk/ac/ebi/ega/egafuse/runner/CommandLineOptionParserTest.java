@@ -127,4 +127,13 @@ public class CommandLineOptionParserTest {
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertTrue(cliConfigurationValues.isTreeStructureEnable());
     }
+    
+    @Test
+    public void parser_WhenGivenTreeOptionInvalidInput_ThenReturnsTrue() throws IOException{        
+        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", "invalidinput"};
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
+        assertTrue(cliConfigurationValues.isTreeStructureEnable());
+    }
 }
