@@ -149,4 +149,58 @@ public class EgaDatasetServiceTest {
         assertEquals(egaFile2.getName(), fileSecond.getName());
     }
 
+    @Test
+    public void buildFileDirectoryFromFilePath_WhenGivenListHavingMoreFiles_ThenReturnsTreeStructure() {
+        EgaDirectory egaParentdirectory = new EgaDirectory("directory", egaDatasetService, egaFileService);
+
+        File file1 = new File();
+        file1.setFileId("test");
+        file1.setFileName("test.cip");
+        file1.setFilePath("a");
+        EgaFile egaFile1 = new EgaFile("test.cip", file1, null);
+
+        File file2 = new File();
+        file2.setFileId("test2");
+        file2.setFileName("test2.cip");
+        file2.setFilePath("a");
+        EgaFile egaFile2 = new EgaFile("test2.cip", file2, null);
+        
+        File file3 = new File();
+        file3.setFileId("test");
+        file3.setFileName("test.cip");
+        file3.setFilePath("a/b");
+        EgaFile egaFile3 = new EgaFile("test.cip", file3, null);
+
+        File file4 = new File();
+        file4.setFileId("test");
+        file4.setFileName("test.cip");
+        file4.setFilePath("/test.cip");
+        EgaFile egaFile4 = new EgaFile("test.cip", file4, null);
+
+        List<EgaFile> egaFiles = new ArrayList<>();
+        egaFiles.add(egaFile1);
+        egaFiles.add(egaFile2);
+        egaFiles.add(egaFile3);
+        egaFiles.add(egaFile4);
+
+        egaDatasetService.buildSubDirectoryFromFilePath(egaFiles, egaParentdirectory);
+
+        EgaDirectory firstDirectory = (EgaDirectory) egaParentdirectory.contents.get(0);  
+        EgaFile file4Out = (EgaFile) egaParentdirectory.contents.get(1);      
+        
+        EgaFile file1Out = (EgaFile) firstDirectory.contents.get(0);
+        EgaFile file2Out = (EgaFile) firstDirectory.contents.get(1);
+        EgaDirectory thirdDirectory = (EgaDirectory) firstDirectory.contents.get(2);
+        
+        EgaFile file3Out = (EgaFile) thirdDirectory.contents.get(0);
+
+        assertEquals(file1.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(egaFile1.getName(), file1Out.getName());
+        assertEquals(file2.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(egaFile2.getName(), file2Out.getName());        
+        assertEquals(file3.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(file3.getFilePath().split("/")[1], thirdDirectory.getName());
+        assertEquals(egaFile3.getName(), file3Out.getName());        
+        assertEquals(egaFile4.getName(), file4Out.getName());
+    }
 }

@@ -82,7 +82,7 @@ public class EgaDirectory extends EgaPath {
 
     public synchronized void read(Pointer buf, FuseFillDir filler) {
         if (contents.size() == 0) {
-            if (getName().equalsIgnoreCase("datasets")) {
+            if ("Datasets".equalsIgnoreCase(getName())) {
                 egaDatasetService.getDatasets().forEach(this::add);
             } else {
                 List<EgaFile> egaFiles = egaFileService.getFiles(this);
