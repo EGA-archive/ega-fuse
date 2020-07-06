@@ -35,6 +35,9 @@ import joptsimple.OptionSet;
 import uk.ac.ebi.ega.egafuse.model.CliConfigurationValues;
 
 public class CommandLineOptionParserTest {
+    private static final String ENABLE = "enable";
+    private static final String DISABLE = "disable";
+    
     @Rule
     public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -113,7 +116,7 @@ public class CommandLineOptionParserTest {
     @Test
     public void parser_WhenGivenTreeOptionDisable_ThenReturnsFalse() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", "disable"};
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", DISABLE};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertFalse(cliConfigurationValues.isTreeStructureEnable());
@@ -122,7 +125,7 @@ public class CommandLineOptionParserTest {
     @Test
     public void parser_WhenGivenTreeOptionEnable_ThenReturnsTrue() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", "enable"};
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", ENABLE};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertTrue(cliConfigurationValues.isTreeStructureEnable());
