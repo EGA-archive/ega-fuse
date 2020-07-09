@@ -17,9 +17,11 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
+import static okhttp3.mock.Behavior.UNORDERED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.isTreeStructureEnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,26 +30,40 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jnr.ffi.Pointer;
+import okhttp3.OkHttpClient;
+import okhttp3.mock.MockInterceptor;
 import ru.serce.jnrfuse.FuseFillDir;
 import uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig;
+import uk.ac.ebi.ega.egafuse.model.File;
 
 @TestPropertySource("classpath:application-test.properties")
 @ContextConfiguration(classes = EgaFuseApplicationConfig.class)
 @RunWith(SpringRunner.class)
 public class EgaDirectoryTest {
-
     private EgaDirectory egaParentdirectory;
-
-    @Mock
+    private IEgaFileService egaFileService;
+    private MockInterceptor interceptor;
+    private OkHttpClient client;
+    private ObjectMapper objectMapper;
     private IEgaDatasetService egaDatasetService;
 
+    @Value("${app.url}")
+    private String APP_URL;
+
     @Mock
-    private IEgaFileService egaFileService;
+    private Token token;
+
+    @Mock
+    private EgaChunkBufferService bufferService;
 
     @Mock
     private Pointer pointer;
@@ -57,6 +73,11 @@ public class EgaDirectoryTest {
 
     @Before
     public void before() {
+        objectMapper = new ObjectMapper();
+        interceptor = new MockInterceptor(UNORDERED);
+        client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+        egaFileService = new EgaFileService(client, APP_URL, token, bufferService);
+        egaDatasetService = new EgaDatasetService(client, APP_URL, token, egaFileService);
         egaParentdirectory = new EgaDirectory("directory", egaDatasetService, egaFileService);
     }
 
@@ -67,12 +88,16 @@ public class EgaDirectoryTest {
     }
 
     @Test
-    public void readDatasets_WhenGivenEgaDirectory_ThenReturnsEgaPath() {
+    public void readDatasets_WhenGivenEgaDirectory_ThenReturnsEgaPath() throws JsonProcessingException {
         EgaDirectory directory = new EgaDirectory("dataset1", egaDatasetService, egaFileService);
         egaParentdirectory.add(directory);
         List<EgaDirectory> egaDirectorys = new ArrayList<>();
         egaDirectorys.add(directory);
-        when(egaDatasetService.getDatasets()).thenReturn(egaDirectorys);
+        
+        interceptor.addRule()
+        .get(APP_URL.concat("/metadata/datasets/").concat(egaParentdirectory.getName()).concat("/files"))
+        .respond(objectMapper.writeValueAsString(egaDirectorys));
+        
         egaParentdirectory.read(pointer, fuseFillDir);
 
         List<EgaPath> contents = egaParentdirectory.contents;
@@ -80,15 +105,113 @@ public class EgaDirectoryTest {
     }
 
     @Test
-    public void readFiles_WhenGivenEgaFile_ThenReturnsEgaPath() {
-        EgaFile egaFile = new EgaFile("files1.cip", egaParentdirectory);
-        List<EgaFile> egaFiles = new ArrayList<>();
-        egaFiles.add(egaFile);
-        when(egaFileService.getFiles(egaParentdirectory)).thenReturn(egaFiles);
+    public void readFiles_WhenGivenEgaFileAndTreeFalse_ThenReturnsEgaPath() throws JsonProcessingException {
+        isTreeStructureEnable = false;
+
+        List<File> files = new ArrayList<>();
+        File file = new File();
+        file.setFileId("EGAF00001");
+        file.setFileName("test1.cip");
+        file.setDisplayFileName("test1");
+        file.setFilePath("A/B");
+        file.setFileSize(100l);
+        files.add(file);
+
+        interceptor.addRule()
+                .get(APP_URL.concat("/metadata/datasets/").concat(egaParentdirectory.getName()).concat("/files"))
+                .respond(objectMapper.writeValueAsString(files));
+
         egaParentdirectory.read(pointer, fuseFillDir);
 
         List<EgaPath> contents = egaParentdirectory.contents;
-        assertEquals(egaFile.getName(), contents.get(0).getName());
+        assertEquals(file.getDisplayFileName(), contents.get(0).getName());
+    }
+
+    @Test
+    public void readFiles_WhenGivenEgaFileAndTreeTrueOneFile_ThenReturnsEgaPath() throws JsonProcessingException {
+        isTreeStructureEnable = true;
+
+        List<File> files = new ArrayList<>();
+        File file = new File();
+        file.setFileId("EGAF00001");
+        file.setFileName("test1.cip");
+        file.setDisplayFileName("test1");
+        file.setFilePath("A/B");
+        file.setFileSize(100l);
+        files.add(file);
+
+        interceptor.addRule()
+                .get(APP_URL.concat("/metadata/datasets/").concat(egaParentdirectory.getName()).concat("/files"))
+                .respond(objectMapper.writeValueAsString(files));
+
+        egaParentdirectory.read(pointer, fuseFillDir);
+
+        EgaDirectory firstDirectory = (EgaDirectory) egaParentdirectory.contents.get(0);
+        EgaDirectory secondDirectory = (EgaDirectory) firstDirectory.contents.get(0);
+        EgaFile fileOutput = (EgaFile) secondDirectory.contents.get(0);
+
+        assertEquals(file.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(file.getFilePath().split("/")[1], secondDirectory.getName());
+        assertEquals(file.getDisplayFileName(), fileOutput.getName());
+    }
+    
+    @Test
+    public void readFiles_WhenGivenEgaFileAndTreeTrueMoreFiles_ThenReturnsEgaPath() throws JsonProcessingException {
+        isTreeStructureEnable = true;
+
+        File file1 = new File();
+        file1.setFileId("test");
+        file1.setFileName("test.cip");
+        file1.setDisplayFileName("test.cip");
+        file1.setFilePath("a");
+
+        File file2 = new File();
+        file2.setFileId("test2");
+        file2.setFileName("test2.cip");
+        file2.setDisplayFileName("test2.cip");
+        file2.setFilePath("a");
+        
+        File file3 = new File();
+        file3.setFileId("test");
+        file3.setFileName("test.cip");
+        file3.setDisplayFileName("test.cip");
+        file3.setFilePath("a/b");
+
+        File file4 = new File();
+        file4.setFileId("test");
+        file4.setFileName("test.cip");
+        file4.setDisplayFileName("test.cip");
+        file4.setFilePath("/test.cip");
+
+        List<File> egaFiles = new ArrayList<>();
+        egaFiles.add(file1);
+        egaFiles.add(file2);
+        egaFiles.add(file3);
+        egaFiles.add(file4);
+
+        interceptor.addRule()
+                .get(APP_URL.concat("/metadata/datasets/").concat(egaParentdirectory.getName()).concat("/files"))
+                .respond(objectMapper.writeValueAsString(egaFiles));
+
+        egaParentdirectory.read(pointer, fuseFillDir);
+
+        EgaDirectory firstDirectory = (EgaDirectory) egaParentdirectory.contents.get(0);  
+        EgaFile firstDirectoryFirstFile = (EgaFile) egaParentdirectory.contents.get(1);      
+        
+        EgaFile secondDirectoryFirstFile = (EgaFile) firstDirectory.contents.get(0);
+        EgaFile secondDirectorySecondFile = (EgaFile) firstDirectory.contents.get(1);
+        EgaDirectory secondDirectory = (EgaDirectory) firstDirectory.contents.get(2);
+        
+        EgaFile thirdDirectoryFirstFile = (EgaFile) secondDirectory.contents.get(0);
+
+        assertEquals(file1.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(file1.getDisplayFileName(), secondDirectoryFirstFile.getName());
+        assertEquals(file2.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(file2.getDisplayFileName(), secondDirectorySecondFile.getName());        
+        assertEquals(file3.getFilePath().split("/")[0], firstDirectory.getName());
+        assertEquals(file3.getFilePath().split("/")[1], secondDirectory.getName());
+        assertEquals(file3.getDisplayFileName(), thirdDirectoryFirstFile.getName());        
+        assertEquals(file4.getDisplayFileName(), firstDirectoryFirstFile.getName());
     }
 
     @Test

@@ -186,21 +186,21 @@ public class EgaDatasetServiceTest {
         egaDatasetService.buildSubDirectoryFromFilePath(egaFiles, egaParentdirectory);
 
         EgaDirectory firstDirectory = (EgaDirectory) egaParentdirectory.contents.get(0);  
-        EgaFile file4Out = (EgaFile) egaParentdirectory.contents.get(1);      
+        EgaFile firstDirectoryFirstFile = (EgaFile) egaParentdirectory.contents.get(1);      
         
-        EgaFile file1Out = (EgaFile) firstDirectory.contents.get(0);
-        EgaFile file2Out = (EgaFile) firstDirectory.contents.get(1);
-        EgaDirectory thirdDirectory = (EgaDirectory) firstDirectory.contents.get(2);
+        EgaFile secondDirectoryFirstFile = (EgaFile) firstDirectory.contents.get(0);
+        EgaFile secondDirectorySecondFile = (EgaFile) firstDirectory.contents.get(1);
+        EgaDirectory secondDirectory = (EgaDirectory) firstDirectory.contents.get(2);
         
-        EgaFile file3Out = (EgaFile) thirdDirectory.contents.get(0);
+        EgaFile thirdDirectoryFirstFile = (EgaFile) secondDirectory.contents.get(0);
 
         assertEquals(file1.getFilePath().split("/")[0], firstDirectory.getName());
-        assertEquals(egaFile1.getName(), file1Out.getName());
+        assertEquals(egaFile1.getName(), secondDirectoryFirstFile.getName());
         assertEquals(file2.getFilePath().split("/")[0], firstDirectory.getName());
-        assertEquals(egaFile2.getName(), file2Out.getName());        
+        assertEquals(egaFile2.getName(), secondDirectorySecondFile.getName());        
         assertEquals(file3.getFilePath().split("/")[0], firstDirectory.getName());
-        assertEquals(file3.getFilePath().split("/")[1], thirdDirectory.getName());
-        assertEquals(egaFile3.getName(), file3Out.getName());        
-        assertEquals(egaFile4.getName(), file4Out.getName());
+        assertEquals(file3.getFilePath().split("/")[1], secondDirectory.getName());
+        assertEquals(egaFile3.getName(), thirdDirectoryFirstFile.getName());        
+        assertEquals(egaFile4.getName(), firstDirectoryFirstFile.getName());
     }
 }
