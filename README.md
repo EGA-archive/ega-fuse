@@ -68,6 +68,7 @@ Optional arguments:
 * m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path exists`
 * cache : the maximum size of the cache, default value: 100 `Means 100 * 10 MB = 1000 MB`
 * c : connections, download using specified number of connections, default value: 4
+* t : toggle tree structure, Shows files with original submitter directory structure (enable) or all the dataset files in a single directory (disable), default value: `enable`
 * h : help, show this help message and exit
 * cf : credential file below format
 ```

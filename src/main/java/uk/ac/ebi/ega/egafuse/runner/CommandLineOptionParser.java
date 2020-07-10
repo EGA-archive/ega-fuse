@@ -35,6 +35,8 @@ import uk.ac.ebi.ega.egafuse.model.Credential;
 
 public class CommandLineOptionParser {
     private static final String OPTIONS_HELP = "h";
+    private static final String ENABLE = "enable";
+    private static final String DISABLE = "disable";
 
     public static CliConfigurationValues parser(OptionSet optionSet) throws IOException {
         final OptionParser optionParser = buildParser();
@@ -62,6 +64,9 @@ public class CommandLineOptionParser {
                     .concat(" can't be used as mount point. Ensure that the directory path should exist."));
         }
         cliConfigurationValues.setMountPath(mntPath);
+        cliConfigurationValues
+                .setTreeStructureEnable(DISABLE.equalsIgnoreCase(optionSet.valueOf("t").toString()) ? false : true);
+
         return cliConfigurationValues;
     }
 
@@ -74,6 +79,7 @@ public class CommandLineOptionParser {
         parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
         parser.accepts("p", "password").requiredIf("u").withRequiredArg();
         parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
+        parser.accepts("t", "tree structure").withRequiredArg().defaultsTo(ENABLE);
         parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
         parser.accepts("m", "mount path").withRequiredArg().withValuesConvertedBy(new PathConverter())
                 .defaultsTo(Paths.get("/tmp/mnt"));

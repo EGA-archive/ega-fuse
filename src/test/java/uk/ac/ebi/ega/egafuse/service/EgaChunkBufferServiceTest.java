@@ -52,6 +52,9 @@ public class EgaChunkBufferServiceTest {
 
     @Value("${cache.prefetch}")
     private int PREFETCH;
+    
+    @Value("${tree}")
+    private boolean isTreeStructureEnable;
 
     @Mock
     private AsyncLoadingCache<CacheKey, byte[]> cache;

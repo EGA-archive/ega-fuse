@@ -17,6 +17,8 @@
  */
 package uk.ac.ebi.ega.egafuse.service;
 
+import static uk.ac.ebi.ega.egafuse.config.EgaFuseApplicationConfig.isTreeStructureEnable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,10 +82,15 @@ public class EgaDirectory extends EgaPath {
 
     public synchronized void read(Pointer buf, FuseFillDir filler) {
         if (contents.size() == 0) {
-            if (getName().equalsIgnoreCase("datasets")) {
+            if ("Datasets".equalsIgnoreCase(getName())) {
                 egaDatasetService.getDatasets().forEach(this::add);
             } else {
-                egaFileService.getFiles(this).forEach(this::add);
+                List<EgaFile> egaFiles = egaFileService.getFiles(this);
+
+                if (isTreeStructureEnable)
+                    egaDatasetService.buildSubDirectoryFromFilePath(egaFiles, this);
+                else
+                    egaFiles.stream().forEach(this::add);
             }
         }
 

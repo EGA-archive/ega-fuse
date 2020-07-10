@@ -20,7 +20,9 @@ package uk.ac.ebi.ega.egafuse.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,4 +88,71 @@ public class EgaDatasetService implements IEgaDatasetService {
             throw new ClientProtocolException(response.body().string());
         }
     }
+
+    @Override
+    public void buildSubDirectoryFromFilePath(List<EgaFile> egaFiles, EgaDirectory datasetRootNode) {
+        Map<String, EgaDirectory> filePathDirectory = new HashMap<>();
+
+        for (EgaFile egaFile : egaFiles) {
+            EgaDirectory currentDirectory = null;
+            String filePath = recreateFilePath(egaFile.getFile().getFilePath().trim());
+                    
+            // if file does not have any directory
+            if (filePath.endsWith(".cip")) {
+                filePathDirectory.put(filePath, datasetRootNode);
+                datasetRootNode.add(egaFile);
+            }
+            // if directory already created
+            else if (filePathDirectory.containsKey(filePath)) {
+                currentDirectory = filePathDirectory.get(filePath);
+                currentDirectory.add(egaFile);
+            }
+            // if directory doesn't exists
+            else {
+                createSubDirectory(filePath, filePathDirectory, currentDirectory, datasetRootNode, egaFile);
+            }
+        }
+    }
+    
+    private String recreateFilePath(String filePath) {
+        String pathSoFar = "";
+        for(String subPath: filePath.split("/")) {
+            if(!subPath.trim().isEmpty()) {
+                pathSoFar = pathSoFar.isEmpty() ? subPath.trim() : pathSoFar.concat("/").concat(subPath.trim());
+            }            
+        }
+        return pathSoFar;
+    }
+
+    private void createSubDirectory(String filePath, Map<String, EgaDirectory> filePathDirectory,
+            EgaDirectory currentDirectory, EgaDirectory datasetRootNode, EgaFile egaFile) {
+        String subPaths[] = filePath.split("/");
+        String pathSoFar = "";
+        EgaDirectory subPathDirectory = null;
+
+        // create directory
+        for (String subPath : subPaths) {
+            pathSoFar = pathSoFar.isEmpty() ? subPath.trim() : pathSoFar.concat("/").concat(subPath.trim());
+
+            if (filePathDirectory.get(pathSoFar) == null) {
+                subPathDirectory = new EgaDirectory(subPath, this, egaFileService);
+
+                // create first child of datasetRootNode
+                if (currentDirectory == null) {
+                    datasetRootNode.add(subPathDirectory);
+                    filePathDirectory.put(pathSoFar, subPathDirectory);
+                } else {
+                    currentDirectory.add(subPathDirectory);
+                    filePathDirectory.put(pathSoFar, subPathDirectory);
+                }
+            } else {
+                subPathDirectory = filePathDirectory.get(pathSoFar);
+            }
+            currentDirectory = subPathDirectory;
+        }
+
+        // add file to current directory
+        currentDirectory.add(egaFile);
+    }
+
 }

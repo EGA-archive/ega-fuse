@@ -46,6 +46,8 @@ public final class CommandLineOptionPropertySource extends PropertySource<Option
             return String.valueOf(cliConfigurationValues.getConnection());
         case "mountPath":
             return cliConfigurationValues.getMountPath().toString();
+        case "tree":
+            return cliConfigurationValues.isTreeStructureEnable();            
         default:
             return null;
         }
