@@ -36,26 +36,22 @@ mvn install
 
 Use the command below to run the jar
 ```
-java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --u=USERNAME --p=PASSWORD
-```
-or
-```
 java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --cf=CREDENTIAL_FILE_PATH
 ```
 or
 ```
-java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --u=USERNAME --p=PASSWORD --m=MOUNTPOINT_PATH --cache=CACHE_SIZE --c=CONNECTION
+java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --cf=CREDENTIAL_FILE_PATH --m=MOUNTPOINT_PATH --cache=CACHE_SIZE --c=CONNECTION
 ```
 or
 
 In Linux the fuse layer can also be started, stopped and restarted using shell script ./fuseclient.sh as:
 
 ```
-./fuseclient.sh start "--u=USERNAME --p=PASSWORD"
+./fuseclient.sh start "--cf=CREDENTIAL_FILE_PATH"
 ```
  
 ```
-./fuseclient.sh restart "--u=USERNAME --p=PASSWORD"
+./fuseclient.sh restart "--cf=CREDENTIAL_FILE_PATH"
 ```
 
 ``` 
@@ -63,8 +59,6 @@ In Linux the fuse layer can also be started, stopped and restarted using shell s
 ```
 
 Optional arguments:
-* u : username
-* p : password
 * m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path exists`
 * cache : the maximum size of the cache, default value: 100 `Means 100 * 10 MB = 1000 MB`
 * c : connections, download using specified number of connections, default value: 4
@@ -75,6 +69,8 @@ Optional arguments:
 username:ega-test-data@ebi.ac.uk
 password:egarocks
 ```
+
+`Note` : If no credential file were provided it will prompt the user for username and password.
 
 ### Troubleshoot fuseclient.sh
 Check the log file fuse-client-logs.log. If you see any error as `fuse: bad mount point /tmp/mnt: Transport endpoint is not connected.`, try running the command below

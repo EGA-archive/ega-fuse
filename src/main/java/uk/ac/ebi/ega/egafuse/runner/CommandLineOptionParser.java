@@ -52,10 +52,7 @@ public class CommandLineOptionParser {
         if (optionSet.has("cf")) {
             cliConfigurationValues.setCredential(readCredentialFile((Path) optionSet.valueOf("cf")));
         } else {
-            Credential credential = new Credential();
-            credential.setUsername(optionSet.valueOf("u").toString());
-            credential.setPassword(optionSet.valueOf("p").toString());
-            cliConfigurationValues.setCredential(credential);
+            cliConfigurationValues.setCredential(readCredentialConsole());
         }
 
         Path mntPath = (Path) (optionSet.valueOf("m"));
@@ -76,8 +73,6 @@ public class CommandLineOptionParser {
         parser.accepts("cf",
                 "credential file path containing username & password, e.g. \n username:user1 \n  password:pass")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
-        parser.accepts("u", "username").requiredUnless("cf").withRequiredArg();
-        parser.accepts("p", "password").requiredIf("u").withRequiredArg();
         parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
         parser.accepts("t", "tree structure").withRequiredArg().defaultsTo(ENABLE);
         parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
@@ -112,4 +107,12 @@ public class CommandLineOptionParser {
         }
         return credential;
     }
+    
+    private static Credential readCredentialConsole() throws IOException {
+        Credential credential = new Credential();
+        credential.setUsername(System.console().readLine("Enter username: "));
+        credential.setPassword(new String(System.console().readPassword("Enter password: ")));
+        return credential;
+    }
+    
 }
