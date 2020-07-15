@@ -94,11 +94,11 @@ public class CommandLineOptionParser {
                 if (key.equalsIgnoreCase("username")) {
                     credential.setUsername(st.nextToken(":"));
                 } else if (key.equalsIgnoreCase("password")) {
-                    credential.setPassword(st.nextToken(":"));
+                    credential.setPassword(st.nextToken(":").toCharArray());
                 }
             }
 
-            if (Strings.isNullOrEmpty(credential.getUsername()) || Strings.isNullOrEmpty(credential.getPassword())) {
+            if (Strings.isNullOrEmpty(credential.getUsername()) || credential.getPassword() == null || credential.getPassword().length == 0) {
                 throw new IllegalArgumentException(
                         "Username or Password not Specified in File ".concat(filepath.toString()));
             }
@@ -111,7 +111,7 @@ public class CommandLineOptionParser {
     private static Credential readCredentialConsole() throws IOException {
         Credential credential = new Credential();
         credential.setUsername(System.console().readLine("Enter username: "));
-        credential.setPassword(new String(System.console().readPassword("Enter password: ")));
+        credential.setPassword(System.console().readPassword("Enter password: "));
         return credential;
     }
     

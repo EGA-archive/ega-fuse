@@ -19,7 +19,7 @@ package uk.ac.ebi.ega.egafuse.model;
 
 public class Credential {
     private String username;
-    private String password;
+    private char[] password;
 
     public String getUsername() {
         return username;
@@ -29,11 +29,11 @@ public class Credential {
         this.username = username;
     }
 
-    public String getPassword() {
+    public char[] getPassword() {
         return password;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(char[] password) {
         this.password = password;
     }
 

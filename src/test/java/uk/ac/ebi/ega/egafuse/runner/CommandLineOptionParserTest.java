@@ -52,7 +52,7 @@ public class CommandLineOptionParserTest {
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertEquals(cliConfigurationValues.getCredential().getUsername(), "amohan");
-        assertEquals(cliConfigurationValues.getCredential().getPassword(), "testpass");
+        assertEquals(new String(cliConfigurationValues.getCredential().getPassword()), "testpass");
         assertEquals(cliConfigurationValues.getConnection(), 2);
         assertEquals(cliConfigurationValues.getMountPath().toString(), mountFolder.getAbsolutePath().toString());
     }

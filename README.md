@@ -70,7 +70,7 @@ username:ega-test-data@ebi.ac.uk
 password:egarocks
 ```
 
-`Note` : If no credential file were provided it will prompt the user for username and password.
+`Note` : If no credential file was provided it will prompt the user for username and password.
 
 ### Troubleshoot fuseclient.sh
 Check the log file fuse-client-logs.log. If you see any error as `fuse: bad mount point /tmp/mnt: Transport endpoint is not connected.`, try running the command below
