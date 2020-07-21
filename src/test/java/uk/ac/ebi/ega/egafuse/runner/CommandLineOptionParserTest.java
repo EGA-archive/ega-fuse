@@ -30,7 +30,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import joptsimple.OptionException;
 import joptsimple.OptionSet;
 import uk.ac.ebi.ega.egafuse.model.CliConfigurationValues;
 
@@ -49,19 +48,11 @@ public class CommandLineOptionParserTest {
     @Test
     public void parser_WhenGivenCredentialFile_ThenReturnsUsernameAndPassword() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        final File credFolder = temporaryFolder.newFolder("home", "user");
-        final File credFile = new File(credFolder, "credfile.txt");
-        try (final FileOutputStream fileOutputStream = new FileOutputStream(credFile)) {
-            fileOutputStream.write("username:amohan".getBytes());
-            fileOutputStream.write("\n".getBytes());
-            fileOutputStream.write("password:testpass".getBytes());
-            fileOutputStream.flush();
-        }
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", credFile.toPath().toAbsolutePath().toString(), "-c", "2"};
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", createCredentialFile(), "-c", "2"};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertEquals(cliConfigurationValues.getCredential().getUsername(), "amohan");
-        assertEquals(cliConfigurationValues.getCredential().getPassword(), "testpass");
+        assertEquals(new String(cliConfigurationValues.getCredential().getPassword()), "testpass");
         assertEquals(cliConfigurationValues.getConnection(), 2);
         assertEquals(cliConfigurationValues.getMountPath().toString(), mountFolder.getAbsolutePath().toString());
     }
@@ -88,27 +79,9 @@ public class CommandLineOptionParserTest {
         CommandLineOptionParser.parser(set);
     }
     
-    @Test
-    public void parser_WhenGivenUsernameAndPassword_ThenReturnsUsernameAndPassword() throws IOException{        
-        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass"};
-        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
-        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
-        assertEquals(cliConfigurationValues.getCredential().getUsername(), "amohan");
-        assertEquals(cliConfigurationValues.getCredential().getPassword(), "testpass");
-    }
-
-    @Test(expected = OptionException.class)
-    public void parser_WhenGivenMissingPassword_ThenThrowsException() throws IOException{        
-        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");       
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan"};
-        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
-        CommandLineOptionParser.parser(set);
-    }
-    
     @Test(expected = IllegalArgumentException.class)
     public void parser_WhenGivenMountPathNotExists_ThenThrowsException() throws IOException{
-        String[] args = { "-m", "/randomVal", "-u", "amohan", "-p", "testpass"};
+        String[] args = { "-m", "/randomVal", "-cf", createCredentialFile()};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CommandLineOptionParser.parser(set);
     }
@@ -116,7 +89,7 @@ public class CommandLineOptionParserTest {
     @Test
     public void parser_WhenGivenTreeOptionDisable_ThenReturnsFalse() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", DISABLE};
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", createCredentialFile(), "-t", DISABLE};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertFalse(cliConfigurationValues.isTreeStructureEnable());
@@ -125,7 +98,7 @@ public class CommandLineOptionParserTest {
     @Test
     public void parser_WhenGivenTreeOptionEnable_ThenReturnsTrue() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", ENABLE};
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", createCredentialFile(), ENABLE};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertTrue(cliConfigurationValues.isTreeStructureEnable());
@@ -134,9 +107,21 @@ public class CommandLineOptionParserTest {
     @Test
     public void parser_WhenGivenTreeOptionInvalidInput_ThenReturnsTrue() throws IOException{        
         final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
-        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-u", "amohan", "-p", "testpass", "-t", "invalidinput"};
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", createCredentialFile(), "-t", "invalidinput"};
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertTrue(cliConfigurationValues.isTreeStructureEnable());
+    }
+    
+    private String createCredentialFile() throws IOException {
+        final File credFolder = temporaryFolder.newFolder("home", "user");
+        final File credFile = new File(credFolder, "credfile.txt");
+        try (final FileOutputStream fileOutputStream = new FileOutputStream(credFile)) {
+            fileOutputStream.write("username:amohan".getBytes());
+            fileOutputStream.write("\n".getBytes());
+            fileOutputStream.write("password:testpass".getBytes());
+            fileOutputStream.flush();
+        }
+        return credFile.toPath().toAbsolutePath().toString();
     }
 }
