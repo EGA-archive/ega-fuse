@@ -40,7 +40,7 @@ public class EgaFuse extends FuseStubFS {
     public void start() {
         try {
             String[] args_ = new String[] { "-o", "allow_other" };
-            this.mount(Paths.get(mountPath), true, true, args_);
+            this.mount(Paths.get(mountPath), true, false, args_);
         } finally {
             this.umount();
         }

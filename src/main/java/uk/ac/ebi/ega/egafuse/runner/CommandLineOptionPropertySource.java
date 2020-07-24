@@ -44,6 +44,8 @@ public final class CommandLineOptionPropertySource extends PropertySource<Option
             return String.valueOf(cliConfigurationValues.getMaxCache());
         case "connection":
             return String.valueOf(cliConfigurationValues.getConnection());
+        case "connectionPerFile":
+            return String.valueOf(cliConfigurationValues.getConnectionPerFile());            
         case "mountPath":
             return cliConfigurationValues.getMountPath().toString();
         case "tree":

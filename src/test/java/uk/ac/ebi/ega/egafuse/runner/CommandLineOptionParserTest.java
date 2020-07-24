@@ -113,6 +113,24 @@ public class CommandLineOptionParserTest {
         assertTrue(cliConfigurationValues.isTreeStructureEnable());
     }
     
+    @Test
+    public void parser_WhenGivenNocAndNocpf_ThenNoException() throws IOException{        
+        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        String[] args = { "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", createCredentialFile()};
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
+        CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
+        assertEquals(cliConfigurationValues.getConnection(), 4);
+        assertEquals(cliConfigurationValues.getConnectionPerFile(), 1);
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void parser_WhenGivencGreaterThancpf_ThenThrowsException() throws IOException{        
+        final File mountFolder = temporaryFolder.newFolder("tmp", "mount");
+        String[] args = { "-c", "1", "-cpf", "2", "-m", mountFolder.toPath().toAbsolutePath().toString(), "-cf", createCredentialFile() };
+        OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;       
+        CommandLineOptionParser.parser(set);
+    }
+    
     private String createCredentialFile() throws IOException {
         final File credFolder = temporaryFolder.newFolder("home", "user");
         final File credFile = new File(credFolder, "credfile.txt");
