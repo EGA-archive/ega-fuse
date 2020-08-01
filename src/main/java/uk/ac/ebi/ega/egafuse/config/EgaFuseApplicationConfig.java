@@ -63,12 +63,12 @@ public class EgaFuseApplicationConfig {
     }
 
     @Bean
-    public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE, @Value("${connectionPerFile}") int cachePrefetch,
+    public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE, @Value("${connection}") int CONNECTION,
             IFileChunkDownloadService fileChunkDownloadService) {
         return  Caffeine.newBuilder()
                         .expireAfterWrite(5, TimeUnit.HOURS)
                         .maximumSize(MAX_CACHE_SIZE)
-                        .executor(Executors.newFixedThreadPool(cachePrefetch))
+                        .executor(Executors.newFixedThreadPool(CONNECTION))
                         .buildAsync(fileChunkDownloadService::downloadChunk);
     }
 

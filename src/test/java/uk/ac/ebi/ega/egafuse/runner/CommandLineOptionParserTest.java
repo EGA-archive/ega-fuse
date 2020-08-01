@@ -120,7 +120,7 @@ public class CommandLineOptionParserTest {
         OptionSet set = CommandLineOptionParser.buildParser().parse(args) ;        
         CliConfigurationValues cliConfigurationValues = CommandLineOptionParser.parser(set);
         assertEquals(cliConfigurationValues.getConnection(), 4);
-        assertEquals(cliConfigurationValues.getConnectionPerFile(), 1);
+        assertEquals(cliConfigurationValues.getConnectionPerFile(), 2);
     }
     
     @Test(expected = IllegalArgumentException.class)
