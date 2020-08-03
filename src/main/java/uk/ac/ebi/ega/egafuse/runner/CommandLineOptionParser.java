@@ -47,6 +47,15 @@ public class CommandLineOptionParser {
 
         final CliConfigurationValues cliConfigurationValues = new CliConfigurationValues();
         cliConfigurationValues.setConnection(Integer.valueOf(optionSet.valueOf("c").toString()));
+        cliConfigurationValues.setConnectionPerFile(Integer.valueOf(optionSet.valueOf("cpf").toString()));
+
+        if (cliConfigurationValues.getConnection() < cliConfigurationValues.getConnectionPerFile()) {
+            throw new IllegalArgumentException(
+                    "cpf(connections per file)=" + cliConfigurationValues.getConnectionPerFile()
+                            + " must be less than or equal to the c(connections)="
+                            + cliConfigurationValues.getConnection());
+        }
+
         cliConfigurationValues.setMaxCache(Integer.valueOf(optionSet.valueOf("cache").toString()));
 
         if (optionSet.has("cf")) {
@@ -74,6 +83,7 @@ public class CommandLineOptionParser {
                 "credential file path containing username & password, e.g. \n username:user1 \n  password:pass")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
         parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
+        parser.accepts("cpf", "connections per file").withRequiredArg().ofType(Integer.class).defaultsTo(2);
         parser.accepts("t", "tree structure").withRequiredArg().defaultsTo(ENABLE);
         parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
         parser.accepts("m", "mount path").withRequiredArg().withValuesConvertedBy(new PathConverter())
@@ -98,7 +108,8 @@ public class CommandLineOptionParser {
                 }
             }
 
-            if (Strings.isNullOrEmpty(credential.getUsername()) || credential.getPassword() == null || credential.getPassword().length == 0) {
+            if (Strings.isNullOrEmpty(credential.getUsername()) || credential.getPassword() == null
+                    || credential.getPassword().length == 0) {
                 throw new IllegalArgumentException(
                         "Username or Password not Specified in File ".concat(filepath.toString()));
             }
@@ -107,12 +118,12 @@ public class CommandLineOptionParser {
         }
         return credential;
     }
-    
+
     private static Credential readCredentialConsole() throws IOException {
         Credential credential = new Credential();
         credential.setUsername(System.console().readLine("Enter username: "));
         credential.setPassword(System.console().readPassword("Enter password: "));
         return credential;
     }
-    
+
 }

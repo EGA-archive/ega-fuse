@@ -22,6 +22,7 @@ import java.nio.file.Path;
 public class CliConfigurationValues {
     private boolean isTreeStructureEnable;
     private int connection;
+    private int connectionPerFile;
     private int maxCache;
     private Path mountPath;
     private Credential credential;
@@ -33,7 +34,15 @@ public class CliConfigurationValues {
     public void setConnection(int connection) {
         this.connection = connection;
     }
-    
+
+    public int getConnectionPerFile() {
+        return connectionPerFile;
+    }
+
+    public void setConnectionPerFile(int connectionPerFile) {
+        this.connectionPerFile = connectionPerFile;
+    }
+
     public int getMaxCache() {
         return maxCache;
     }
@@ -57,7 +66,7 @@ public class CliConfigurationValues {
     public void setCredential(Credential credential) {
         this.credential = credential;
     }
-    
+
     public boolean isTreeStructureEnable() {
         return isTreeStructureEnable;
     }
@@ -68,7 +77,8 @@ public class CliConfigurationValues {
 
     @Override
     public String toString() {
-        return "CliConfigurationValues [credential=" + credential + ", maxCache=" + maxCache + ", connection=" + connection + ", mountPath="
-                + mountPath + ", isTreeStructureEnable=" + isTreeStructureEnable + "]";
+        return "CliConfigurationValues [credential=" + credential + ", maxCache=" + maxCache + ", connection="
+                + connection + ", connectionPerFile=" + connectionPerFile + ", mountPath=" + mountPath
+                + ", isTreeStructureEnable=" + isTreeStructureEnable + "]";
     }
 }

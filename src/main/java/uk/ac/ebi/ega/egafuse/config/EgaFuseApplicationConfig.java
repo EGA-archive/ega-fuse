@@ -17,6 +17,7 @@
  */
 package uk.ac.ebi.ega.egafuse.config;
 
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -62,11 +63,12 @@ public class EgaFuseApplicationConfig {
     }
 
     @Bean
-    public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE,
+    public AsyncLoadingCache<CacheKey, byte[]> cache(@Value("${maxCache}") int MAX_CACHE_SIZE, @Value("${connection}") int CONNECTION,
             IFileChunkDownloadService fileChunkDownloadService) {
         return  Caffeine.newBuilder()
                         .expireAfterWrite(5, TimeUnit.HOURS)
                         .maximumSize(MAX_CACHE_SIZE)
+                        .executor(Executors.newFixedThreadPool(CONNECTION))
                         .buildAsync(fileChunkDownloadService::downloadChunk);
     }
 
@@ -107,7 +109,7 @@ public class EgaFuseApplicationConfig {
     }
     
     @Bean
-    public IEgaChunkBufferService egaChunkBufferService(@Value("${cache.prefetch}") int cachePrefetch, AsyncLoadingCache<CacheKey, byte[]> cache) {
+    public IEgaChunkBufferService egaChunkBufferService(@Value("${connectionPerFile}") int cachePrefetch, AsyncLoadingCache<CacheKey, byte[]> cache) {
         return new EgaChunkBufferService(chunkSize, cachePrefetch, cache);
     }
 

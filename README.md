@@ -40,7 +40,7 @@ java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --cf=CREDENTIAL_FILE_PATH
 ```
 or
 ```
-java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --cf=CREDENTIAL_FILE_PATH --m=MOUNTPOINT_PATH --cache=CACHE_SIZE --c=CONNECTION
+java -jar target/ega-fuse-0.0.1-SNAPSHOT.jar --cf=CREDENTIAL_FILE_PATH --m=MOUNTPOINT_PATH --cache=CACHE_SIZE --c=CONNECTION --cpf=CONNECTION_PER_FILE
 ```
 or
 
@@ -61,7 +61,8 @@ In Linux the fuse layer can also be started, stopped and restarted using shell s
 Optional arguments:
 * m : mount point path, default value: /tmp/mnt `Note: Ensure that the mount point path exists`
 * cache : the maximum size of the cache, default value: 100 `Means 100 * 10 MB = 1000 MB`
-* c : connections, download using specified number of connections, default value: 4
+* c : connections, maximum number of API connections used by the application, default value: 4
+* cpf : connections per file, download a file using the specified number of connections, default value: 2, `preferably, c (connections) >= cpf (connections per file)`
 * t : toggle tree structure, Shows files with original submitter directory structure (enable) or all the dataset files in a single directory (disable), default value: `enable`
 * h : help, show this help message and exit
 * cf : credential file below format

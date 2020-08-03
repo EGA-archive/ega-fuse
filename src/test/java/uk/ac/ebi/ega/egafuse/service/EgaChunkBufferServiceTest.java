@@ -50,7 +50,7 @@ public class EgaChunkBufferServiceTest {
     @Value("${api.chunksize}")
     private long CHUNK_SIZE;
 
-    @Value("${cache.prefetch}")
+    @Value("${connectionPerFile}")
     private int PREFETCH;
     
     @Value("${tree}")
