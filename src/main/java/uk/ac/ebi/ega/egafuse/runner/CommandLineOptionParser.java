@@ -51,8 +51,8 @@ public class CommandLineOptionParser {
 
         if (cliConfigurationValues.getConnection() < cliConfigurationValues.getConnectionPerFile()) {
             throw new IllegalArgumentException(
-                    "cpf(Max connection per file)=" + cliConfigurationValues.getConnectionPerFile()
-                            + " must be less than or equal to the c(max connections parameter)="
+                    "cpf(connections per file)=" + cliConfigurationValues.getConnectionPerFile()
+                            + " must be less than or equal to the c(connections)="
                             + cliConfigurationValues.getConnection());
         }
 
@@ -82,7 +82,7 @@ public class CommandLineOptionParser {
         parser.accepts("cf",
                 "credential file path containing username & password, e.g. \n username:user1 \n  password:pass")
                 .withRequiredArg().withValuesConvertedBy(new PathConverter());
-        parser.accepts("c", "max connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
+        parser.accepts("c", "connections").withRequiredArg().ofType(Integer.class).defaultsTo(4);
         parser.accepts("cpf", "connections per file").withRequiredArg().ofType(Integer.class).defaultsTo(2);
         parser.accepts("t", "tree structure").withRequiredArg().defaultsTo(ENABLE);
         parser.accepts("cache", "max cache").withRequiredArg().ofType(Integer.class).defaultsTo(100);
